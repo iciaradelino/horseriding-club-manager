@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
 
@@ -39,12 +39,12 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "horse_club_admin.urls"
+ROOT_URLCONF = "urls"
 
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR.parent / "frontend" / "templates"],
+        "DIRS": [BASE_DIR.parent / "frontend" / "templates"],  # horseriding-club-manager/frontend/templates
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -57,7 +57,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "horse_club_admin.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 DATABASES = {
     "default": {
@@ -85,7 +85,7 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "/static/"
-STATICFILES_DIRS = [BASE_DIR.parent / "frontend" / "static"]
+STATICFILES_DIRS = [BASE_DIR.parent / "frontend" / "static"]  # horseriding-club-manager/frontend/static
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 MEDIA_URL = "/media/"

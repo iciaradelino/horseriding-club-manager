@@ -7,7 +7,7 @@ backend/
 ├── manage.py
 ├── requirements.txt
 ├── .env.example
-├── settings.py / urls.py / asgi.py / wsgi.py   ← project config
+├── settings.py / urls.py / asgi.py / wsgi.py   ← project config 
 ├── accounts/       custom user model + auth
 ├── members/        rider profiles
 ├── horses/         horse profiles + health records
