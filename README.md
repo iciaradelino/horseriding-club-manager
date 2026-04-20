@@ -20,7 +20,7 @@ A Django web application for managing the daily operations of a horse riding clu
 ## Tech Stack
 
 - **Backend:** Python / Django
-- **Frontend:** ??
+- **Frontend:** HTML, Django Templates, Tailwind CSS
 - **Database:** PostgreSQL ??
 
 ---
