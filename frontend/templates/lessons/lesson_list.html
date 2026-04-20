@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Lessons · Herradura{% endblock %}
+{% block topbar_title %}Lessons{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'lessons:create' %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    Schedule lesson
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">The schedule</div>
+        <h1 class="page__title">Lessons</h1>
+        <p class="page__lede">Every scheduled, completed and cancelled lesson in one list. Filter by status to narrow it down.</p>
+    </div>
+</div>
+
+{% if lessons %}
+<div x-data="{ status: 'all' }">
+    <div class="flex gap-2 mb-4" style="flex-wrap:wrap">
+        <button @click="status = 'all'"       :class="status === 'all'       ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
+        <button @click="status = 'scheduled'" :class="status === 'scheduled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Scheduled</button>
+        <button @click="status = 'completed'" :class="status === 'completed' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Completed</button>
+        <button @click="status = 'cancelled'" :class="status === 'cancelled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Cancelled</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Lesson</th>
+                    <th>Trainer</th>
+                    <th>Horse</th>
+                    <th>Riders</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in lessons %}
+                <tr x-show="status === 'all' || status === '{{ lesson.status }}'">
+                    <td>
+                        <div class="tabular" style="color:var(--color-ink);font-weight:500">{{ lesson.start_time|date:"D j M" }}</div>
+                        <div class="muted small mono">{{ lesson.start_time|date:"H:i" }} – {{ lesson.end_time|date:"H:i" }}</div>
+                    </td>
+                    <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                    <td>{{ lesson.trainer|default:"—" }}</td>
+                    <td>{{ lesson.horse.name|default:"—" }}</td>
+                    <td class="tabular">{{ lesson.members.count }}</td>
+                    <td>
+                        {% if lesson.status == 'scheduled' %}<span class="badge badge-info">Scheduled</span>
+                        {% elif lesson.status == 'completed' %}<span class="badge badge-success">Completed</span>
+                        {% else %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+                    </td>
+                    <td class="text-right">
+                        <a href="{% url 'lessons:detail' lesson.pk %}" class="btn btn-ghost btn-sm">Open</a>
+                        <a href="{% url 'lessons:update' lesson.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% url 'lessons:create' as lessons_create_url %}
+{% include "partials/_empty.html" with title="No lessons scheduled yet" message="Create your first lesson to begin populating the schedule." cta_url=lessons_create_url cta_label="Schedule the first lesson" %}
+{% endif %}
+{% endblock %}

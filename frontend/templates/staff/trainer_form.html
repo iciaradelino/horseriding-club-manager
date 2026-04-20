@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} trainer · Herradura{% endblock %}
+{% block topbar_title %}{% if object %}Edit trainer{% else %}New trainer{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'staff:list' %}" class="btn btn-ghost">← Back to trainers</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Teaching staff</div>
+        <h1 class="page__title">{% if object %}Editing {{ object }}{% else %}Add a new trainer{% endif %}</h1>
+        <p class="page__lede">{% if object %}Update this trainer's specialisation, bio and status.{% else %}Link a user account to a trainer record so they can be assigned to lessons.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'staff:list' as staff_list_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save trainer" cancel_url=staff_list_url %}
+    </div>
+</div>
+{% endblock %}

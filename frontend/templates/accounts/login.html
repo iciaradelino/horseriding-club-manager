@@ -1,0 +1,84 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign in · Herradura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/logo.svg' %}">
+</head>
+<body>
+
+<div class="auth-wrap">
+
+    <aside class="auth-hero">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="sidebar__brand-mark" style="width:44px;height:44px;font-size:1.4rem;">H</div>
+                <div>
+                    <div style="font-family:var(--font-display);font-size:1.55rem;color:#fff;line-height:1">Herradura</div>
+                    <div class="auth-hero__mono" style="margin-top:4px">Club Manager</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fade-in" style="position:relative;z-index:2">
+            <div class="auth-hero__mono mb-4">EST. 2026 · MEMBERS ONLY</div>
+            <h1>Where good horses and good riders meet.</h1>
+            <p>
+                A single home for your lessons, your horses, your riders and your books —
+                built for the people who actually run the yard.
+            </p>
+        </div>
+
+        <div class="auth-hero__footer" style="position:relative;z-index:2">
+            &copy; {% now "Y" %} Herradura · A Django MVT project
+        </div>
+    </aside>
+
+    <div class="auth-form-wrap">
+        <div class="auth-form fade-in">
+            <div class="mb-6">
+                <div class="auth-hero__mono" style="color:var(--color-accent-600);margin-bottom:.5rem">Sign in</div>
+                <h2 style="font-size:2rem">Welcome back.</h2>
+                <p class="muted mt-2">Enter your credentials to access your club dashboard.</p>
+            </div>
+
+            <form method="post" class="form" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="field"><div class="errors">{{ form.non_field_errors }}</div></div>
+                {% endif %}
+
+                {% for field in form %}
+                <div class="field">
+                    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}
+                </div>
+                {% endfor %}
+
+                {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+                <button type="submit" class="btn btn-primary btn-lg w-full" style="justify-content:center">
+                    Sign in
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7-7 7M21 12H3"/></svg>
+                </button>
+            </form>
+
+            <p class="muted small mt-6" style="text-align:center">
+                Trouble signing in? Speak to your club administrator.
+            </p>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

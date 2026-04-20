@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Trainers · Herradura{% endblock %}
+{% block topbar_title %}Trainers{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'staff:create' %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New trainer
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Teaching staff</div>
+        <h1 class="page__title">Trainers</h1>
+        <p class="page__lede">Your teaching team, their specialisations and availability.</p>
+    </div>
+</div>
+
+{% if trainers %}
+<div class="grid-auto stagger">
+    {% for trainer in trainers %}
+    <a href="{% url 'staff:detail' trainer.pk %}" class="card" style="text-decoration:none;display:flex;flex-direction:column">
+        <div class="card__body" style="padding:1.5rem;text-align:center">
+            <div class="avatar" style="width:72px;height:72px;font-size:1.75rem;margin:0 auto 1rem;background:var(--color-primary);color:var(--color-accent)">
+                {{ trainer.user.first_name|first|default:trainer.user.username|first|upper }}
+            </div>
+            <h3 style="color:var(--color-ink);margin-bottom:.25rem">{{ trainer.user.get_full_name|default:trainer.user.username }}</h3>
+            <div class="muted small mono">@{{ trainer.user.username }}</div>
+            {% if trainer.specialisation %}
+            <div class="mt-4"><span class="badge badge-accent">{{ trainer.specialisation }}</span></div>
+            {% endif %}
+        </div>
+        <div class="card__footer" style="text-align:center">
+            {{ trainer.lessons.count }} lesson{{ trainer.lessons.count|pluralize }} scheduled
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+{% url 'staff:create' as staff_create_url %}
+{% include "partials/_empty.html" with title="No trainers on record" message="Add your teaching team here so you can assign them to lessons." cta_url=staff_create_url cta_label="Add the first trainer" %}
+{% endif %}
+{% endblock %}

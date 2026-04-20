@@ -1,0 +1,17 @@
+{% comment %}
+Usage:
+    {% include "partials/_empty.html" with title="No horses yet" message="..." cta_url=url cta_label="Add a horse" %}
+{% endcomment %}
+<div class="empty">
+    <div class="empty__icon">
+        <svg width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path stroke-linecap="round" d="M9 10l6 4M15 10l-6 4"/>
+        </svg>
+    </div>
+    <h3>{{ title|default:"Nothing here yet" }}</h3>
+    <p>{{ message|default:"Get started by creating your first record." }}</p>
+    {% if cta_url %}
+    <a href="{{ cta_url }}" class="btn btn-primary mt-4">{{ cta_label|default:"Create new" }}</a>
+    {% endif %}
+</div>

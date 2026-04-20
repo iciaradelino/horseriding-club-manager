@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Invoices · Herradura{% endblock %}
+{% block topbar_title %}Invoices{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Finance</div>
+        <h1 class="page__title">Invoices</h1>
+        <p class="page__lede">Issued invoices, their due dates, and payment status.</p>
+    </div>
+</div>
+
+{% if invoices %}
+{# Totals and counts are computed client-side from data-* attributes so the
+   billing summary is always in sync with whatever is rendered, even if the
+   backend later adds pagination or filtering. #}
+<div x-data="{
+        status: 'all',
+        counts: { pending: 0, paid: 0, overdue: 0 },
+        totals: { pending: 0, paid: 0, overdue: 0 }
+     }"
+     x-init="
+        document.querySelectorAll('tr[data-status]').forEach(r => {
+            const s = r.dataset.status;
+            const amt = parseFloat(r.dataset.amount || '0');
+            if (counts[s] !== undefined) { counts[s]++; totals[s] += amt; }
+        });
+     ">
+
+    <div class="grid-3 mb-6">
+        <div class="stat">
+            <div class="stat__label">Pending</div>
+            <div class="stat__value tabular">€ <span x-text="totals.pending.toFixed(0)"></span></div>
+            <div class="stat__delta"><span x-text="counts.pending"></span> awaiting payment</div>
+        </div>
+        <div class="stat">
+            <div class="stat__label">Paid</div>
+            <div class="stat__value tabular" style="color:var(--color-success)">€ <span x-text="totals.paid.toFixed(0)"></span></div>
+            <div class="stat__delta up"><span x-text="counts.paid"></span> settled</div>
+        </div>
+        <div class="stat">
+            <div class="stat__label">Overdue</div>
+            <div class="stat__value tabular" style="color:var(--color-danger)">€ <span x-text="totals.overdue.toFixed(0)"></span></div>
+            <div class="stat__delta down"><span x-text="counts.overdue"></span> need chasing</div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mb-4" style="flex-wrap:wrap">
+        <button @click="status = 'all'"     :class="status === 'all'     ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
+        <button @click="status = 'pending'" :class="status === 'pending' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Pending</button>
+        <button @click="status = 'paid'"    :class="status === 'paid'    ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Paid</button>
+        <button @click="status = 'overdue'" :class="status === 'overdue' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Overdue</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Rider</th>
+                    <th>Plan</th>
+                    <th>Issued</th>
+                    <th>Due</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in invoices %}
+                <tr data-status="{{ invoice.status }}" data-amount="{{ invoice.amount }}"
+                    x-show="status === 'all' || status === '{{ invoice.status }}'">
+                    <td class="mono">#{{ invoice.pk|stringformat:"05d" }}</td>
+                    <td>
+                        <a href="{% url 'members:detail' invoice.membership.member.pk %}" class="row-link">{{ invoice.membership.member }}</a>
+                    </td>
+                    <td>{{ invoice.membership.plan.name }}</td>
+                    <td class="tabular muted">{{ invoice.issued_date|date:"j M Y" }}</td>
+                    <td class="tabular">{{ invoice.due_date|date:"j M Y" }}</td>
+                    <td class="tabular" style="font-weight:500;color:var(--color-ink)">€ {{ invoice.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if invoice.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+                        {% elif invoice.status == 'paid' %}<span class="badge badge-success">Paid</span>
+                        {% else %}<span class="badge badge-danger">Overdue</span>{% endif %}
+                    </td>
+                    <td class="text-right">
+                        <a href="{% url 'billing:invoice_detail' invoice.pk %}" class="btn btn-ghost btn-sm">Open →</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% include "partials/_empty.html" with title="No invoices yet" message="Invoices will appear here as memberships are billed." %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Membership plans · Herradura{% endblock %}
+{% block topbar_title %}Membership plans{% endblock %}
+{% block topbar_actions %}
+<a href="/admin/billing/membershipplan/add/" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New plan (admin)
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Finance</div>
+        <h1 class="page__title">Membership plans</h1>
+        <p class="page__lede">The plans your riders can subscribe to. Plans are managed in the Django admin for now.</p>
+    </div>
+</div>
+
+{% if plans %}
+<div class="grid-3 stagger">
+    {% for plan in plans %}
+    <div class="card" style="display:flex;flex-direction:column">
+        <div class="card__body" style="padding:1.75rem">
+            <div class="flex items-center justify-between">
+                <div class="page__eyebrow">{{ plan.get_billing_cycle_display }}</div>
+                {% if plan.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-neutral">Inactive</span>{% endif %}
+            </div>
+            <h2 style="font-size:1.65rem;margin-top:.5rem">{{ plan.name }}</h2>
+            <div class="flex items-baseline gap-2 mt-4">
+                <div style="font-family:var(--font-display);font-size:3rem;line-height:1;color:var(--color-primary)" class="tabular">€{{ plan.price|floatformat:0 }}</div>
+                <div class="muted small">/ {{ plan.get_billing_cycle_display|lower }}</div>
+            </div>
+            {% if plan.description %}
+            <p class="muted mt-4" style="min-height:3em">{{ plan.description }}</p>
+            {% endif %}
+            <hr class="hr">
+            <div class="flex items-center gap-2">
+                <svg width="18" height="18" fill="none" stroke="var(--color-accent-600)" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                <div style="color:var(--color-ink);font-weight:500">
+                    {% if plan.lessons_per_cycle %}
+                        {{ plan.lessons_per_cycle }} lesson{{ plan.lessons_per_cycle|pluralize }} per {{ plan.get_billing_cycle_display|lower }}
+                    {% else %}
+                        Unlimited lessons
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+{% include "partials/_empty.html" with title="No membership plans defined" message="Create plans in the Django admin to offer subscriptions to your riders." cta_url="/admin/billing/membershipplan/add/" cta_label="Open admin" %}
+{% endif %}
+{% endblock %}

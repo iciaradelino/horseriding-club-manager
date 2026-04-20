@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} lesson · Herradura{% endblock %}
+{% block topbar_title %}{% if object %}Edit lesson{% else %}Schedule lesson{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'lessons:list' %}" class="btn btn-ghost">← Back to lessons</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Schedule</div>
+        <h1 class="page__title">{% if object %}Editing {{ object.title }}{% else %}Schedule a new lesson{% endif %}</h1>
+        <p class="page__lede">{% if object %}Adjust the time, roster or assignment.{% else %}Pick a trainer, a horse and the riders taking part. Start and end times define the slot.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:820px">
+    <div class="card__body">
+        {% url 'lessons:list' as lessons_list_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save lesson" cancel_url=lessons_list_url %}
+    </div>
+</div>
+{% endblock %}

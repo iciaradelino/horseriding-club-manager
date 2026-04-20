@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}{{ trainer }} · Herradura{% endblock %}
+{% block topbar_title %}Trainer profile{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'staff:list' %}" class="btn btn-ghost">← All trainers</a>
+<a href="{% url 'staff:update' trainer.pk %}" class="btn btn-outline">Edit</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text" style="display:flex;gap:1.25rem;align-items:center">
+        <div class="avatar" style="width:80px;height:80px;font-size:2rem;background:var(--color-primary);color:var(--color-accent)">
+            {{ trainer.user.first_name|first|default:trainer.user.username|first|upper }}
+        </div>
+        <div>
+            <div class="page__eyebrow">Trainer</div>
+            <h1 class="page__title">{{ trainer.user.get_full_name|default:trainer.user.username }}</h1>
+            <div class="flex gap-2 mt-2 items-center" style="flex-wrap:wrap">
+                {% if trainer.specialisation %}<span class="badge badge-accent">{{ trainer.specialisation }}</span>{% endif %}
+                {% if trainer.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-neutral">Inactive</span>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        {% if trainer.bio %}
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">About</div></div>
+            <div class="card__body" style="white-space:pre-wrap;color:var(--color-ink-soft)">{{ trainer.bio }}</div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card__header"><div class="card__title">Lessons taught</div></div>
+            {% with lessons=trainer.lessons.all %}
+                {% if lessons %}
+                <div class="table-wrap" style="border:none;border-radius:0">
+                    <table class="data">
+                        <thead><tr><th>When</th><th>Lesson</th><th>Horse</th><th>Status</th></tr></thead>
+                        <tbody>
+                        {% for lesson in lessons|slice:":15" %}
+                        <tr>
+                            <td class="tabular">{{ lesson.start_time|date:"j M Y · H:i" }}</td>
+                            <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                            <td>{{ lesson.horse.name|default:"—" }}</td>
+                            <td>
+                                {% if lesson.status == 'scheduled' %}<span class="badge badge-info">Scheduled</span>
+                                {% elif lesson.status == 'completed' %}<span class="badge badge-success">Completed</span>
+                                {% else %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="card__body">
+                    {% include "partials/_empty.html" with title="No lessons yet" message="Lessons assigned to this trainer will appear here." %}
+                </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+    </div>
+
+    <aside>
+        <div class="card">
+            <div class="card__header"><div class="card__title">Contact</div></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Username</dt><dd class="mono">@{{ trainer.user.username }}</dd>
+                    <dt>Email</dt><dd>{{ trainer.user.email|default:"—" }}</dd>
+                    <dt>Phone</dt><dd class="mono">{{ trainer.user.phone|default:"—" }}</dd>
+                    <dt>Specialisation</dt><dd>{{ trainer.specialisation|default:"—" }}</dd>
+                    <dt>Status</dt><dd>{% if trainer.is_active %}Active{% else %}Inactive{% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

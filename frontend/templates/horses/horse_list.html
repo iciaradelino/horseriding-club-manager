@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Horses · Herradura{% endblock %}
+{% block topbar_title %}Horses{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'horses:create' %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New horse
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">The Yard</div>
+        <h1 class="page__title">Horses</h1>
+        <p class="page__lede">Every horse on the books, with status, age and health history at a glance.</p>
+    </div>
+</div>
+
+{% if horses %}
+<div x-data="{ q: '', status: 'all' }">
+    <div class="flex items-center gap-3 mb-4" style="flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:240px;max-width:420px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:var(--color-muted)"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
+            <input type="text" x-model="q" placeholder="Search horses by name or breed…"
+                   style="width:100%;padding:.6rem .9rem .6rem 2.3rem;border:1px solid var(--color-border);border-radius:8px;background:var(--color-surface);font:inherit">
+        </div>
+        <div class="flex gap-2">
+            <button @click="status = 'all'" :class="status === 'all' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
+            <button @click="status = 'available'" :class="status === 'available' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Available</button>
+            <button @click="status = 'in_lesson'" :class="status === 'in_lesson' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">In lesson</button>
+            <button @click="status = 'resting'" :class="status === 'resting' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Resting</button>
+            <button @click="status = 'retired'" :class="status === 'retired' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Retired</button>
+        </div>
+    </div>
+
+    <div class="grid-auto stagger">
+        {% for horse in horses %}
+        <a href="{% url 'horses:detail' horse.pk %}" class="horse-card"
+           x-show="(q === '' || '{{ horse.name|lower }} {{ horse.breed|lower }}'.includes(q.toLowerCase())) && (status === 'all' || status === '{{ horse.status }}')">
+            <div class="horse-card__photo">
+                {% if horse.photo %}
+                    <img src="{{ horse.photo.url }}" alt="{{ horse.name }}">
+                {% else %}
+                    <span>{{ horse.name|first|upper }}</span>
+                {% endif %}
+            </div>
+            <div class="horse-card__body">
+                <div class="flex items-center justify-between">
+                    <div class="horse-card__name">{{ horse.name }}</div>
+                    {% if horse.status == 'available' %}<span class="badge badge-success">Available</span>
+                    {% elif horse.status == 'in_lesson' %}<span class="badge badge-accent">In lesson</span>
+                    {% elif horse.status == 'resting' %}<span class="badge badge-warning">Resting</span>
+                    {% else %}<span class="badge badge-neutral">Retired</span>{% endif %}
+                </div>
+                <div class="horse-card__meta mt-2">
+                    {% if horse.breed %}<span>{{ horse.breed }}</span>{% endif %}
+                    {% if horse.age %}<span>{{ horse.age }} yrs</span>{% endif %}
+                    {% if horse.color %}<span>{{ horse.color }}</span>{% endif %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+{% url 'horses:create' as horses_create_url %}
+{% include "partials/_empty.html" with title="No horses on the roll yet" message="Add your first horse to start scheduling lessons." cta_url=horses_create_url cta_label="Add the first horse" %}
+{% endif %}
+{% endblock %}

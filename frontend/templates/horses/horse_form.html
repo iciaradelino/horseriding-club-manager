@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} horse · Herradura{% endblock %}
+{% block topbar_title %}{% if object %}Edit horse{% else %}New horse{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'horses:list' %}" class="btn btn-ghost">← Back to horses</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Horse profile</div>
+        <h1 class="page__title">{% if object %}Editing {{ object.name }}{% else %}Add a new horse{% endif %}</h1>
+        <p class="page__lede">{% if object %}Update the horse's profile, status and photo.{% else %}Capture the basics. You can always add a photo and health records later.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'horses:list' as horses_list_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save horse" cancel_url=horses_list_url %}
+    </div>
+</div>
+{% endblock %}

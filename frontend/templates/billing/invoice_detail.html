@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Invoice #{{ invoice.pk }} · Herradura{% endblock %}
+{% block topbar_title %}Invoice #{{ invoice.pk|stringformat:"05d" }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:invoice_list' %}" class="btn btn-ghost">← All invoices</a>
+<button onclick="window.print()" class="btn btn-primary no-print">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 14h12v6H6z M6 18H3v-6a2 2 0 012-2h14a2 2 0 012 2v6h-3"/></svg>
+    Print
+</button>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:780px;margin:0 auto">
+
+    {# --- Invoice header --- #}
+    <div class="card mb-6">
+        <div class="card__body" style="padding:2.25rem">
+            <div class="flex items-center justify-between" style="flex-wrap:wrap;gap:1.5rem">
+                <div>
+                    <div class="flex items-center gap-3">
+                        <div class="sidebar__brand-mark" style="width:44px;height:44px;font-size:1.4rem">H</div>
+                        <div>
+                            <div style="font-family:var(--font-display);font-size:1.5rem;color:var(--color-ink);line-height:1">Herradura</div>
+                            <div class="page__eyebrow" style="margin:4px 0 0">Riding Club</div>
+                        </div>
+                    </div>
+                    <p class="muted small mt-4" style="max-width:30ch">
+                        Herradura Club Manager<br>
+                        Club address · City · Country<br>
+                        vat@herradura.club
+                    </p>
+                </div>
+
+                <div class="text-right">
+                    <div class="page__eyebrow">Invoice</div>
+                    <h1 style="font-size:2.5rem;margin-top:.5rem" class="mono">#{{ invoice.pk|stringformat:"05d" }}</h1>
+                    <div class="mt-2">
+                        {% if invoice.status == 'pending' %}<span class="badge badge-warning">Pending</span>
+                        {% elif invoice.status == 'paid' %}<span class="badge badge-success">Paid</span>
+                        {% else %}<span class="badge badge-danger">Overdue</span>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <hr class="hr">
+
+            <div class="grid-2">
+                <div>
+                    <div class="page__eyebrow">Billed to</div>
+                    <h3 class="mt-2" style="font-size:1.1rem">{{ invoice.membership.member }}</h3>
+                    <p class="muted small mono mt-2">@{{ invoice.membership.member.user.username }}</p>
+                    {% if invoice.membership.member.user.email %}<p class="muted small">{{ invoice.membership.member.user.email }}</p>{% endif %}
+                </div>
+                <div>
+                    <dl class="kv">
+                        <dt>Issued</dt><dd class="tabular">{{ invoice.issued_date|date:"j F Y" }}</dd>
+                        <dt>Due</dt><dd class="tabular">{{ invoice.due_date|date:"j F Y" }}</dd>
+                        {% if invoice.paid_date %}<dt>Paid</dt><dd class="tabular">{{ invoice.paid_date|date:"j F Y" }}</dd>{% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- Line items --- #}
+    <div class="card mb-6">
+        <table class="data" style="margin:0">
+            <thead>
+                <tr><th>Description</th><th>Period</th><th class="text-right">Amount</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <div style="font-weight:500;color:var(--color-ink)">{{ invoice.membership.plan.name }}</div>
+                        <div class="muted small">{{ invoice.membership.plan.get_billing_cycle_display }} membership · {{ invoice.membership.plan.description|truncatewords:14 }}</div>
+                    </td>
+                    <td class="tabular">{{ invoice.membership.start_date|date:"j M Y" }} → {{ invoice.membership.end_date|date:"j M Y" }}</td>
+                    <td class="text-right tabular" style="font-weight:500">€ {{ invoice.amount|floatformat:2 }}</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="card__footer" style="display:flex;justify-content:flex-end;gap:3rem;background:var(--color-surface)">
+            <div style="text-align:right">
+                <div class="muted small">Total due</div>
+                <div style="font-family:var(--font-display);font-size:2.25rem;line-height:1;color:var(--color-primary);margin-top:.4rem" class="tabular">
+                    € {{ invoice.amount|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- Payment note --- #}
+    <div class="card no-print">
+        <div class="card__body">
+            <h3>Payment</h3>
+            <p class="muted mt-2">
+                {% if invoice.status == 'paid' %}
+                    This invoice was paid on {{ invoice.paid_date|date:"j F Y" }}. Thank you.
+                {% elif invoice.status == 'overdue' %}
+                    This invoice is past its due date. Please contact billing to arrange payment.
+                {% else %}
+                    This invoice is due by <strong class="mono">{{ invoice.due_date|date:"j F Y" }}</strong>.
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

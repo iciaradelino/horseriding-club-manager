@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}New health record · Herradura{% endblock %}
+{% block topbar_title %}New health record{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'horses:detail' view.kwargs.horse_pk %}" class="btn btn-ghost">← Back to horse</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Health log</div>
+        <h1 class="page__title">New health record</h1>
+        <p class="page__lede">Log a vet visit, farrier appointment, vaccination, or other note for this horse.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:720px">
+    <div class="card__body">
+        {% url 'horses:detail' view.kwargs.horse_pk as cancel_target %}
+        {% include "partials/_form.html" with form=form submit_label="Save record" cancel_url=cancel_target %}
+    </div>
+</div>
+{% endblock %}

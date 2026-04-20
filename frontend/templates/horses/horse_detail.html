@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}{{ horse.name }} · Herradura{% endblock %}
+{% block topbar_title %}{{ horse.name }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'horses:list' %}" class="btn btn-ghost">← Back to horses</a>
+<a href="{% url 'horses:update' horse.pk %}" class="btn btn-outline">Edit</a>
+<a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New health record
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text" style="display:flex;gap:1.5rem;align-items:center">
+        <div style="width:96px;height:96px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#e8dec2,#c9b98b);display:grid;place-items:center;font-family:var(--font-display);font-size:2.5rem;color:var(--color-primary-700);flex-shrink:0">
+            {% if horse.photo %}
+                <img src="{{ horse.photo.url }}" alt="{{ horse.name }}" style="width:100%;height:100%;object-fit:cover">
+            {% else %}
+                {{ horse.name|first|upper }}
+            {% endif %}
+        </div>
+        <div>
+            <div class="page__eyebrow">Horse</div>
+            <h1 class="page__title">{{ horse.name }}</h1>
+            <div class="flex gap-2 mt-2 items-center" style="flex-wrap:wrap">
+                {% if horse.status == 'available' %}<span class="badge badge-success">Available</span>
+                {% elif horse.status == 'in_lesson' %}<span class="badge badge-accent">In lesson</span>
+                {% elif horse.status == 'resting' %}<span class="badge badge-warning">Resting</span>
+                {% else %}<span class="badge badge-neutral">Retired</span>{% endif %}
+                {% if horse.breed %}<span class="muted">· {{ horse.breed }}</span>{% endif %}
+                {% if horse.age %}<span class="muted">· {{ horse.age }} years old</span>{% endif %}
+                {% if horse.color %}<span class="muted">· {{ horse.color }}</span>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card mb-6">
+            <div class="card__header">
+                <div class="card__title">Health records</div>
+                <a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-outline btn-sm ml-auto">Add record</a>
+            </div>
+            {% if health_records %}
+            <div class="card__body" style="padding:0">
+                <div style="position:relative">
+                    {% for rec in health_records %}
+                    <div style="padding:1.1rem 1.4rem;border-bottom:1px solid var(--color-border-soft);display:grid;grid-template-columns:auto 1fr auto;gap:1rem;align-items:start">
+                        <div style="width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:
+                            {% if rec.record_type == 'vet' %}#e3f0e7;color:#1f5a34
+                            {% elif rec.record_type == 'farrier' %}#f8edd4;color:#7a5417
+                            {% elif rec.record_type == 'vaccination' %}#e1ecec;color:#1e4747
+                            {% else %}var(--color-surface-alt);color:var(--color-ink-soft){% endif %}">
+                            {% if rec.record_type == 'vet' %}
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+                            {% elif rec.record_type == 'farrier' %}
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M6 4v8a6 6 0 0 0 12 0V4"/></svg>
+                            {% elif rec.record_type == 'vaccination' %}
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 4l6 6-9 9H5v-6z"/></svg>
+                            {% else %}
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 8v4l3 2"/></svg>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2" style="flex-wrap:wrap">
+                                <strong>{{ rec.get_record_type_display }}</strong>
+                                {% if rec.performed_by %}<span class="muted small">· by {{ rec.performed_by }}</span>{% endif %}
+                            </div>
+                            <div class="muted small" style="color:var(--color-ink-soft)">{{ rec.description }}</div>
+                            {% if rec.next_due_date %}
+                            <div class="mt-2"><span class="badge badge-warning">Next due {{ rec.next_due_date|date:"j M Y" }}</span></div>
+                            {% endif %}
+                        </div>
+                        <div class="tabular muted small" style="text-align:right;white-space:nowrap">{{ rec.date|date:"j M Y" }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="card__body">
+                {% include "partials/_empty.html" with title="No health records yet" message="Log vet visits, farrier appointments and vaccinations here." %}
+            </div>
+            {% endif %}
+        </div>
+
+        {% if horse.notes %}
+        <div class="card">
+            <div class="card__header"><div class="card__title">Notes</div></div>
+            <div class="card__body" style="white-space:pre-wrap;color:var(--color-ink-soft)">{{ horse.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <aside>
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">Profile</div></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Breed</dt><dd>{{ horse.breed|default:"—" }}</dd>
+                    <dt>Colour</dt><dd>{{ horse.color|default:"—" }}</dd>
+                    <dt>Date of birth</dt><dd class="tabular">{{ horse.date_of_birth|default:"—" }}</dd>
+                    <dt>Age</dt><dd>{% if horse.age %}{{ horse.age }} years{% else %}—{% endif %}</dd>
+                    <dt>Status</dt><dd>{{ horse.get_status_display }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__header"><div class="card__title">Upcoming lessons</div></div>
+            <div class="card__body">
+                {% with lessons=horse.lessons.all %}
+                    {% if lessons %}
+                        {% for lesson in lessons|slice:":5" %}
+                        <div class="mb-2" style="padding-bottom:.7rem;border-bottom:1px solid var(--color-border-soft)">
+                            <a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a>
+                            <div class="muted small tabular">{{ lesson.start_time|date:"j M · H:i" }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="muted small">No lessons booked with this horse.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

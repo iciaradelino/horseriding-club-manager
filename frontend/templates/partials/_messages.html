@@ -1,0 +1,11 @@
+{% if messages %}
+<div class="messages" aria-live="polite">
+    {% for message in messages %}
+    <div class="toast {{ message.tags }}">
+        <div class="flex items-center gap-3">
+            <div>{{ message }}</div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

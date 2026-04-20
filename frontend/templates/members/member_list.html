@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Riders · Herradura{% endblock %}
+{% block topbar_title %}Riders{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'members:create' %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New rider
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Club members</div>
+        <h1 class="page__title">Riders</h1>
+        <p class="page__lede">Everyone on the roll. Track their skill level, joining date and emergency contacts.</p>
+    </div>
+</div>
+
+{% if members %}
+<div x-data="{ q: '', skill: 'all' }" class="card">
+    <div class="card__header">
+        <div style="flex:1;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+            <div style="position:relative;flex:1;min-width:220px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:var(--color-muted)"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" x-model="q" placeholder="Search by name or username…"
+                       style="width:100%;padding:.55rem .75rem .55rem 2.25rem;border:1px solid var(--color-border);border-radius:6px;background:var(--color-paper);font:inherit">
+            </div>
+            <select x-model="skill" style="padding:.55rem .8rem;border:1px solid var(--color-border);border-radius:6px;background:var(--color-paper);font:inherit">
+                <option value="all">All skill levels</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+            </select>
+        </div>
+        <div class="muted small">{{ members|length }} rider{{ members|length|pluralize }}</div>
+    </div>
+
+    <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>Rider</th>
+                    <th>Skill level</th>
+                    <th>Date of birth</th>
+                    <th>Emergency contact</th>
+                    <th>Joined</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                <tr x-show="(q === '' || '{{ member.user.get_full_name|default:member.user.username|lower }}'.includes(q.toLowerCase())) && (skill === 'all' || skill === '{{ member.skill_level }}')">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:.75rem">
+                            <div class="avatar" style="background:var(--color-primary-50);color:var(--color-primary)">{{ member.user.first_name|first|default:member.user.username|first|upper }}</div>
+                            <div>
+                                <a href="{% url 'members:detail' member.pk %}" class="row-link">{{ member.user.get_full_name|default:member.user.username }}</a>
+                                <div class="muted small mono">@{{ member.user.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if member.skill_level == 'beginner' %}
+                            <span class="badge badge-neutral">Beginner</span>
+                        {% elif member.skill_level == 'intermediate' %}
+                            <span class="badge badge-accent">Intermediate</span>
+                        {% else %}
+                            <span class="badge badge-success">Advanced</span>
+                        {% endif %}
+                    </td>
+                    <td class="tabular">{{ member.date_of_birth|default:"—" }}</td>
+                    <td>
+                        {% if member.emergency_contact_name %}
+                            <div>{{ member.emergency_contact_name }}</div>
+                            <div class="muted small mono">{{ member.emergency_contact_phone }}</div>
+                        {% else %}
+                            <span class="muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="tabular muted">{{ member.joined_date|date:"j M Y" }}</td>
+                    <td class="text-right">
+                        <a href="{% url 'members:detail' member.pk %}" class="btn btn-ghost btn-sm">Open</a>
+                        <a href="{% url 'members:update' member.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% url 'members:create' as members_create_url %}
+{% include "partials/_empty.html" with title="No riders registered yet" message="Add your first member to start tracking lessons and memberships." cta_url=members_create_url cta_label="Add the first rider" %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,44 @@
+{% comment %}
+Reusable form renderer. Usage:
+
+    {% include "partials/_form.html" with form=form submit_label="Save" cancel_url=some_url %}
+
+The CSS in app.css targets .form input/select/textarea and produces styled
+controls, so we don't need django-widget-tweaks here — we just have to render
+labels, help text and errors in our own markup.
+{% endcomment %}
+<form method="post" enctype="multipart/form-data" class="form" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="field">
+        <div class="errors">{{ form.non_field_errors }}</div>
+    </div>
+    {% endif %}
+
+    {% for field in form %}
+        {% if field.is_hidden %}
+            {{ field }}
+        {% else %}
+            <div class="field">
+                <label for="{{ field.id_for_label }}">
+                    {{ field.label }}
+                    {% if field.field.required %}<span class="text-accent">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+                {% if field.errors %}<div class="errors">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">
+            <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            {{ submit_label|default:"Save" }}
+        </button>
+        {% if cancel_url %}
+        <a href="{{ cancel_url }}" class="btn btn-outline">Cancel</a>
+        {% endif %}
+    </div>
+</form>

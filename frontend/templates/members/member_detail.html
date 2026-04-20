@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ member }} · Herradura{% endblock %}
+{% block topbar_title %}Rider profile{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'members:list' %}" class="btn btn-ghost">← Back to riders</a>
+<a href="{% url 'members:update' member.pk %}" class="btn btn-outline">Edit profile</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text" style="display:flex;gap:1.25rem;align-items:center">
+        <div class="avatar" style="width:72px;height:72px;font-size:2rem;background:var(--color-primary);color:var(--color-accent)">
+            {{ member.user.first_name|first|default:member.user.username|first|upper }}
+        </div>
+        <div>
+            <div class="page__eyebrow">Rider</div>
+            <h1 class="page__title">{{ member.user.get_full_name|default:member.user.username }}</h1>
+            <div class="flex gap-2 mt-2 items-center">
+                <span class="muted mono">@{{ member.user.username }}</span>
+                <span class="muted">·</span>
+                {% if member.skill_level == 'beginner' %}<span class="badge badge-neutral">Beginner</span>
+                {% elif member.skill_level == 'intermediate' %}<span class="badge badge-accent">Intermediate</span>
+                {% else %}<span class="badge badge-success">Advanced</span>{% endif %}
+                <span class="muted">·</span>
+                <span class="muted small">Member since {{ member.joined_date|date:"F Y" }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card mb-6">
+            <div class="card__header">
+                <div class="card__title">Lesson history</div>
+                <a href="{% url 'lessons:list' %}" class="btn btn-outline btn-sm ml-auto">All lessons</a>
+            </div>
+            {% with lessons=member.lessons.all %}
+                {% if lessons %}
+                <div class="table-wrap" style="border:none;border-radius:0">
+                    <table class="data">
+                        <thead><tr><th>When</th><th>Lesson</th><th>Trainer</th><th>Horse</th><th>Status</th></tr></thead>
+                        <tbody>
+                        {% for lesson in lessons|slice:":10" %}
+                        <tr>
+                            <td class="tabular">{{ lesson.start_time|date:"j M Y" }}<div class="muted small mono">{{ lesson.start_time|date:"H:i" }}</div></td>
+                            <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                            <td>{{ lesson.trainer|default:"—" }}</td>
+                            <td>{{ lesson.horse.name|default:"—" }}</td>
+                            <td>
+                                {% if lesson.status == 'scheduled' %}<span class="badge badge-info">Scheduled</span>
+                                {% elif lesson.status == 'completed' %}<span class="badge badge-success">Completed</span>
+                                {% else %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="card__body">
+                    {% include "partials/_empty.html" with title="No lessons yet" message="Lessons this rider takes part in will appear here." %}
+                </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        {% if member.notes %}
+        <div class="card">
+            <div class="card__header"><div class="card__title">Notes</div></div>
+            <div class="card__body" style="white-space:pre-wrap;color:var(--color-ink-soft)">{{ member.notes }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    <aside>
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">Contact</div></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Username</dt><dd class="mono">@{{ member.user.username }}</dd>
+                    <dt>Email</dt><dd>{{ member.user.email|default:"—" }}</dd>
+                    <dt>Phone</dt><dd class="mono">{{ member.user.phone|default:"—" }}</dd>
+                    <dt>Date of birth</dt><dd class="tabular">{{ member.date_of_birth|default:"—" }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">Emergency contact</div></div>
+            <div class="card__body">
+                {% if member.emergency_contact_name %}
+                <dl class="kv">
+                    <dt>Name</dt><dd>{{ member.emergency_contact_name }}</dd>
+                    <dt>Phone</dt><dd class="mono">{{ member.emergency_contact_phone|default:"—" }}</dd>
+                </dl>
+                {% else %}
+                <p class="muted small">No emergency contact on file. <a href="{% url 'members:update' member.pk %}">Add one</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__header"><div class="card__title">Memberships</div></div>
+            <div class="card__body">
+                {% with memberships=member.memberships.all %}
+                    {% if memberships %}
+                        {% for ms in memberships %}
+                        <div class="mb-2" style="padding-bottom:.7rem;border-bottom:1px solid var(--color-border-soft)">
+                            <div style="font-weight:500">{{ ms.plan.name }}</div>
+                            <div class="muted small">{{ ms.start_date }} → {{ ms.end_date }}</div>
+                            <span class="badge badge-{% if ms.status == 'active' %}success{% elif ms.status == 'expired' %}neutral{% else %}danger{% endif %} mt-2">{{ ms.get_status_display }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="muted small">No membership plans on file.</p>
+                    {% endif %}
+                {% endwith %}
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

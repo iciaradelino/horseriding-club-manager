@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Memberships · Herradura{% endblock %}
+{% block topbar_title %}Memberships{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:plan_list' %}" class="btn btn-outline">View plans</a>
+<a href="/admin/billing/membership/add/" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New membership
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Subscriptions</div>
+        <h1 class="page__title">Memberships</h1>
+        <p class="page__lede">Every rider's subscription to a plan, past and present.</p>
+    </div>
+</div>
+
+{% if memberships %}
+<div x-data="{ status: 'all' }">
+    <div class="flex gap-2 mb-4" style="flex-wrap:wrap">
+        <button @click="status = 'all'"       :class="status === 'all'       ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
+        <button @click="status = 'active'"    :class="status === 'active'    ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Active</button>
+        <button @click="status = 'expired'"   :class="status === 'expired'   ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Expired</button>
+        <button @click="status = 'cancelled'" :class="status === 'cancelled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Cancelled</button>
+    </div>
+
+    <div class="table-wrap">
+        <table class="data">
+            <thead>
+                <tr><th>Rider</th><th>Plan</th><th>Start</th><th>End</th><th>Status</th><th>Invoices</th></tr>
+            </thead>
+            <tbody>
+                {% for ms in memberships %}
+                <tr x-show="status === 'all' || status === '{{ ms.status }}'">
+                    <td>
+                        <a href="{% url 'members:detail' ms.member.pk %}" class="row-link">{{ ms.member }}</a>
+                        <div class="muted small mono">@{{ ms.member.user.username }}</div>
+                    </td>
+                    <td>
+                        <div style="color:var(--color-ink);font-weight:500">{{ ms.plan.name }}</div>
+                        <div class="muted small tabular">€{{ ms.plan.price|floatformat:0 }} / {{ ms.plan.get_billing_cycle_display|lower }}</div>
+                    </td>
+                    <td class="tabular">{{ ms.start_date|date:"j M Y" }}</td>
+                    <td class="tabular">{{ ms.end_date|date:"j M Y" }}</td>
+                    <td>
+                        {% if ms.status == 'active' %}<span class="badge badge-success">Active</span>
+                        {% elif ms.status == 'expired' %}<span class="badge badge-neutral">Expired</span>
+                        {% else %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+                    </td>
+                    <td class="tabular">{{ ms.invoices.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+{% include "partials/_empty.html" with title="No memberships yet" message="Sign your first rider up to a plan from the Django admin." cta_url="/admin/billing/membership/add/" cta_label="Open admin" %}
+{% endif %}
+{% endblock %}

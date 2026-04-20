@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit{% else %}New{% endif %} rider · Herradura{% endblock %}
+{% block topbar_title %}{% if object %}Edit rider{% else %}New rider{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'members:list' %}" class="btn btn-ghost">← Back to riders</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Rider details</div>
+        <h1 class="page__title">{% if object %}Editing {{ object }}{% else %}Add a new rider{% endif %}</h1>
+        <p class="page__lede">{% if object %}Update this rider's profile, skill level and emergency contact.{% else %}Capture the information needed to enrol a new rider at the club.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'members:list' as members_list_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save rider" cancel_url=members_list_url %}
+    </div>
+</div>
+{% endblock %}
