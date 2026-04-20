@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Horse Riding Club — DB Schema</title>
+  <link rel="stylesheet" href="schema.css" />
+</head>
+<body>
+
+  <svg id="lines"></svg>
+  <div id="canvas"></div>
+
+  <div id="legend">
+    <h3>Horse Riding Club DB</h3>
+    <div class="legend-row"><div class="legend-dot" style="background:#1f3a2a"></div> Authentication</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#2f6d47"></div> People</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#1e4747"></div> Horses</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#274a36"></div> Lessons</div>
+    <div class="legend-row"><div class="legend-dot" style="background:#b8893a"></div> Billing</div>
+    <div class="legend-row" style="margin-top:8px"><span style="color:#a07828">🔑</span> Primary Key</div>
+    <div class="legend-row"><span style="color:#274a36">◆</span> Foreign Key</div>
+    <div class="legend-row"><span style="color:#7a7569">◇</span> Field</div>
+  </div>
+
+  <div id="hint">Drag tables · Pan canvas · Hover to highlight · Click header to focus</div>
+
+  <script src="schema.js"></script>
+</body>
+</html>
