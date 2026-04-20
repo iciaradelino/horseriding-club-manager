@@ -9,25 +9,85 @@
 </a>
 {% endblock %}
 
+{% comment %}
+    Two views share this single page: a tabular LIST and a visual CALENDAR.
+    Both are driven by exactly the same `{{ lessons }}` queryset that
+    `LessonListView` already passes into the template context. No new backend
+    URL, no JSON endpoint, no extra round-trip — the lesson data is embedded
+    into the page as a <script type="application/json"> block, which
+    FullCalendar consumes directly on first render.
+
+    Alpine.js owns the tab state so the calendar mode is lazy-initialised
+    (FullCalendar can't measure itself inside a `display:none` container,
+    so we call `.updateSize()` after the first switch).
+{% endcomment %}
+
+{% block extra_head %}
+{% if lessons %}
+<link  rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+<script                 src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div class="page__header">
     <div class="page__header-text">
         <div class="page__eyebrow">The schedule</div>
         <h1 class="page__title">Lessons</h1>
-        <p class="page__lede">Every scheduled, completed and cancelled lesson in one list. Filter by status to narrow it down.</p>
+        <p class="page__lede">Every scheduled, completed and cancelled lesson. Browse them as a filterable list or as a visual calendar.</p>
     </div>
 </div>
 
 {% if lessons %}
-<div x-data="{ status: 'all' }">
-    <div class="flex gap-2 mb-4" style="flex-wrap:wrap">
-        <button @click="status = 'all'"       :class="status === 'all'       ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
-        <button @click="status = 'scheduled'" :class="status === 'scheduled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Scheduled</button>
-        <button @click="status = 'completed'" :class="status === 'completed' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Completed</button>
-        <button @click="status = 'cancelled'" :class="status === 'cancelled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Cancelled</button>
+
+{# ============================================================
+   Lesson data for FullCalendar — rendered straight from the
+   backend context. No fetch, no JSON endpoint.
+   ============================================================ #}
+<script id="lessons-data" type="application/json">
+[{% for lesson in lessons %}{"id":{{ lesson.pk }},"title":"{{ lesson.title|escapejs }}","start":"{{ lesson.start_time|date:'c' }}","end":"{{ lesson.end_time|date:'c' }}","url":"{% url 'lessons:detail' lesson.pk %}","extendedProps":{"status":"{{ lesson.status }}","trainer":"{{ lesson.trainer|default_if_none:''|escapejs }}","horse":"{{ lesson.horse.name|default_if_none:''|escapejs }}"}}{% if not forloop.last %},{% endif %}{% endfor %}]
+</script>
+
+<div x-data="{ view: (location.hash === '#calendar' ? 'calendar' : 'list'), status: 'all', calendarInitialised: false }"
+     x-init="$watch('view', v => {
+                 history.replaceState(null, '', v === 'calendar' ? '#calendar' : location.pathname);
+                 if (v === 'calendar' && !calendarInitialised) {
+                     $nextTick(() => { window.HerraduraCalendar.mount('#calendar', '#lessons-data'); calendarInitialised = true; });
+                 } else if (v === 'calendar') {
+                     $nextTick(() => window.HerraduraCalendar.resize());
+                 }
+             });
+             if (view === 'calendar') {
+                 $nextTick(() => { window.HerraduraCalendar.mount('#calendar', '#lessons-data'); calendarInitialised = true; });
+             }">
+
+    {# ===== View toggle ===== #}
+    <div class="flex items-center justify-between gap-3 mb-4" style="flex-wrap:wrap">
+        <div class="flex gap-1" style="padding:.25rem;background:var(--color-surface-alt);border:1px solid var(--color-border);border-radius:10px">
+            <button @click="view = 'list'"
+                    :class="view === 'list' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'"
+                    style="padding:.45rem .9rem">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h10"/></svg>
+                List
+            </button>
+            <button @click="view = 'calendar'"
+                    :class="view === 'calendar' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm'"
+                    style="padding:.45rem .9rem">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 9h18M8 3v4M16 3v4"/></svg>
+                Calendar
+            </button>
+        </div>
+
+        <div class="flex gap-2" x-show="view === 'list'" style="flex-wrap:wrap">
+            <button @click="status = 'all'"       :class="status === 'all'       ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">All</button>
+            <button @click="status = 'scheduled'" :class="status === 'scheduled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Scheduled</button>
+            <button @click="status = 'completed'" :class="status === 'completed' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Completed</button>
+            <button @click="status = 'cancelled'" :class="status === 'cancelled' ? 'btn btn-primary btn-sm' : 'btn btn-outline btn-sm'">Cancelled</button>
+        </div>
     </div>
 
-    <div class="table-wrap">
+    {# ===== LIST view ===== #}
+    <div x-show="view === 'list'" class="table-wrap">
         <table class="data">
             <thead>
                 <tr>
@@ -65,9 +125,84 @@
             </tbody>
         </table>
     </div>
+
+    {# ===== CALENDAR view ===== #}
+    <div x-show="view === 'calendar'" x-cloak>
+        <div class="flex gap-4 mb-4" style="flex-wrap:wrap">
+            <div class="flex items-center gap-2"><span class="badge badge-info">Scheduled</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-success">Completed</span></div>
+            <div class="flex items-center gap-2"><span class="badge badge-danger">Cancelled</span></div>
+        </div>
+        <div class="card">
+            <div class="card__body">
+                <div id="calendar"></div>
+            </div>
+        </div>
+        <p class="muted small mt-4" style="text-align:center">
+            Showing lessons only. Vet and farrier appointments are stored per-horse under each horse's profile.
+        </p>
+    </div>
+
 </div>
+
 {% else %}
 {% url 'lessons:create' as lessons_create_url %}
 {% include "partials/_empty.html" with title="No lessons scheduled yet" message="Create your first lesson to begin populating the schedule." cta_url=lessons_create_url cta_label="Schedule the first lesson" %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if lessons %}
+<script>
+/*
+    HerraduraCalendar — tiny namespace that sets up FullCalendar lazily when
+    the Alpine 'view' watcher switches to 'calendar'. Lesson data comes from
+    the <script id="lessons-data" type="application/json"> block above.
+*/
+(function () {
+    let calendar = null;
+
+    function parseEvents(selector) {
+        const node = document.querySelector(selector);
+        if (!node) return [];
+        try { return JSON.parse(node.textContent); }
+        catch (e) { console.error('Bad lessons JSON', e); return []; }
+    }
+
+    window.HerraduraCalendar = {
+        mount: function (elSel, dataSel) {
+            const el = document.querySelector(elSel);
+            if (!el || typeof FullCalendar === 'undefined') return;
+            calendar = new FullCalendar.Calendar(el, {
+                initialView:  'dayGridMonth',
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek' },
+                height:        'auto',
+                slotMinTime:   '06:00:00',
+                slotMaxTime:   '22:00:00',
+                nowIndicator:  true,
+                firstDay:      1,
+                events:        parseEvents(dataSel),
+                eventClick: function (info) {
+                    info.jsEvent.preventDefault();
+                    if (info.event.url) window.location = info.event.url;
+                },
+                eventClassNames: function (arg) {
+                    return ['status-' + (arg.event.extendedProps.status || 'scheduled')];
+                },
+                eventDidMount: function (info) {
+                    const tip = [
+                        info.event.title,
+                        info.event.extendedProps.trainer ? 'Trainer: ' + info.event.extendedProps.trainer : '',
+                        info.event.extendedProps.horse   ? 'Horse: '   + info.event.extendedProps.horse   : '',
+                    ].filter(Boolean).join('\n');
+                    info.el.setAttribute('title', tip);
+                },
+            });
+            calendar.render();
+        },
+        resize: function () { if (calendar) calendar.updateSize(); },
+    };
+})();
+</script>
 {% endif %}
 {% endblock %}

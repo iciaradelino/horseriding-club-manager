@@ -69,6 +69,10 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l9-9 9 9M5 10v10h4v-6h6v6h4V10"/></svg>
                 <span>Dashboard</span>
             </a>
+            <a href="{% url 'lessons:list' %}#calendar" class="nav-link">
+                <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M3 9h18M8 3v4M16 3v4"/></svg>
+                <span>Calendar</span>
+            </a>
 
             <div class="sidebar__section">Operations</div>
             <a href="{% url 'lessons:list' %}" class="nav-link {% if ns == 'lessons' and url_name != 'calendar' %}is-active{% endif %}">

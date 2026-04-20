@@ -571,3 +571,6 @@ table.data a.row-link:hover { color: var(--color-primary); }
 .stagger > *:nth-child(4) { animation-delay: .14s; }
 .stagger > *:nth-child(5) { animation-delay: .18s; }
 .stagger > *:nth-child(6) { animation-delay: .22s; }
+
+/* --- Alpine.js --- hide elements marked x-cloak until Alpine initialises, preventing a flash of unhidden content */
+[x-cloak] { display: none !important; }
