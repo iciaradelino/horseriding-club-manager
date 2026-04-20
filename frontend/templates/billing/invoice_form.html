@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}New invoice · Herradura{% endblock %}
+{% block topbar_title %}New invoice{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:invoice_list' %}" class="btn btn-ghost">← All invoices</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Billing</div>
+        <h1 class="page__title">New invoice</h1>
+        <p class="page__lede">Manually create an invoice for an existing membership.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'billing:invoice_list' as cancel_url %}
+        {% include "partials/_form.html" with form=form submit_label="Create invoice" cancel_url=cancel_url %}
+    </div>
+</div>
+{% endblock %}

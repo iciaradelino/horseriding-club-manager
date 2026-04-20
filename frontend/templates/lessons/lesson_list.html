@@ -40,10 +40,6 @@
 
 {% if lessons %}
 
-{# ============================================================
-   Lesson data for FullCalendar — rendered straight from the
-   backend context. No fetch, no JSON endpoint.
-   ============================================================ #}
 <script id="lessons-data" type="application/json">
 [{% for lesson in lessons %}{"id":{{ lesson.pk }},"title":"{{ lesson.title|escapejs }}","start":"{{ lesson.start_time|date:'c' }}","end":"{{ lesson.end_time|date:'c' }}","url":"{% url 'lessons:detail' lesson.pk %}","extendedProps":{"status":"{{ lesson.status }}","trainer":"{{ lesson.trainer|default_if_none:''|escapejs }}","horse":"{{ lesson.horse.name|default_if_none:''|escapejs }}"}}{% if not forloop.last %},{% endif %}{% endfor %}]
 </script>

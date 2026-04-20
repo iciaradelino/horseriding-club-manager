@@ -30,10 +30,12 @@
         </div>
     </div>
 
-    {# The previous implementation used `{{ total_horses|add:"-"|add:available_horses }}`
-       which does not perform subtraction — Django's `add` filter cannot chain that way
-       and silently falls through. We use Alpine to compute the difference from the two
-       integers that are already rendered into the page, avoiding any new backend context. #}
+    {% comment %}
+       the previous implementation used `total_horses|add:"-"|add:available_horses`
+       which does not perform subtraction — django's `add` filter cannot chain that way
+       and silently falls through. we use alpine to compute the difference from the two
+       integers that are already rendered into the page, avoiding any new backend context.
+    {% endcomment %}
     <div class="stat" x-data="{ total: {{ total_horses|default:0 }}, available: {{ available_horses|default:0 }} }">
         <div class="stat__label">Horses on Roll</div>
         <div class="stat__value">{{ total_horses }}</div>
@@ -62,14 +64,13 @@
     </div>
 </section>
 
-{# ===== Charts row ======================================================
-   Only one chart is kept on this dashboard: horse utilisation. It is the
-   only metric the backend actually surfaces (total_horses + available_horses).
-   The previous revenue / lessons-trend / skill-distribution charts were
-   removed because they were rendering hardcoded demo data that did not
-   reflect the database — keeping them would have been misleading. If those
-   metrics are wired into the DashboardView context in the future, this
-   section is a natural place to restore them. #}
+{% comment %}
+   charts row — only horse utilisation is kept because it is the only metric
+   the backend surfaces (total_horses + available_horses). the revenue /
+   lessons-trend / skill-distribution charts were removed as they rendered
+   hardcoded demo data. restore them here once the dashboardview surfaces
+   the relevant aggregates.
+{% endcomment %}
 <section class="grid-2 mb-6" style="grid-template-columns: 1fr 1fr;">
     <div class="card">
         <div class="card__header">

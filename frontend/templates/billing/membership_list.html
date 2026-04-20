@@ -4,7 +4,7 @@
 {% block topbar_title %}Memberships{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'billing:plan_list' %}" class="btn btn-outline">View plans</a>
-<a href="/admin/billing/membership/add/" class="btn btn-primary">
+<a href="{% url 'billing:membership_create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     New membership
 </a>
@@ -59,6 +59,7 @@
     </div>
 </div>
 {% else %}
-{% include "partials/_empty.html" with title="No memberships yet" message="Sign your first rider up to a plan from the Django admin." cta_url="/admin/billing/membership/add/" cta_label="Open admin" %}
+{% url 'billing:membership_create' as membership_create_url %}
+{% include "partials/_empty.html" with title="No memberships yet" message="Sign your first rider up to a plan to start billing." cta_url=membership_create_url cta_label="New membership" %}
 {% endif %}
 {% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit membership{% else %}New membership{% endif %} · Herradura{% endblock %}
+{% block topbar_title %}{% if object %}Edit membership{% else %}New membership{% endif %}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:membership_list' %}" class="btn btn-ghost">← All memberships</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Billing</div>
+        <h1 class="page__title">{% if object %}Edit membership{% else %}New membership{% endif %}</h1>
+        <p class="page__lede">{% if object %}Update the membership details.{% else %}Assign a plan to a member. The first invoice will be generated automatically.{% endif %}</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'billing:membership_list' as cancel_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save membership" cancel_url=cancel_url %}
+    </div>
+</div>
+{% endblock %}

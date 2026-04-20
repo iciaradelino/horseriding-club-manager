@@ -1,7 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.urls import reverse_lazy
+from mixins import AdminRequiredMixin, AdminOrTrainerMixin
 from .models import Horse, HealthRecord
+from .forms import HorseForm, HealthRecordForm
 
 
 class HorseListView(LoginRequiredMixin, ListView):
@@ -21,24 +23,24 @@ class HorseDetailView(LoginRequiredMixin, DetailView):
         return ctx
 
 
-class HorseCreateView(LoginRequiredMixin, CreateView):
+class HorseCreateView(AdminRequiredMixin, CreateView):
     model = Horse
     template_name = "horses/horse_form.html"
-    fields = ["name", "breed", "date_of_birth", "color", "status", "notes", "photo"]
+    form_class = HorseForm
     success_url = reverse_lazy("horses:list")
 
 
-class HorseUpdateView(LoginRequiredMixin, UpdateView):
+class HorseUpdateView(AdminRequiredMixin, UpdateView):
     model = Horse
     template_name = "horses/horse_form.html"
-    fields = ["name", "breed", "date_of_birth", "color", "status", "notes", "photo"]
+    form_class = HorseForm
     success_url = reverse_lazy("horses:list")
 
 
-class HealthRecordCreateView(LoginRequiredMixin, CreateView):
+class HealthRecordCreateView(AdminOrTrainerMixin, CreateView):
     model = HealthRecord
     template_name = "horses/health_record_form.html"
-    fields = ["record_type", "date", "description", "performed_by", "next_due_date"]
+    form_class = HealthRecordForm
 
     def form_valid(self, form):
         form.instance.horse_id = self.kwargs["horse_pk"]

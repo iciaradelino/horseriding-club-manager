@@ -2,6 +2,12 @@
 
 {% block title %}Invoices · Herradura{% endblock %}
 {% block topbar_title %}Invoices{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:invoice_create' %}" class="btn btn-primary">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
+    New invoice
+</a>
+{% endblock %}
 
 {% block content %}
 <div class="page__header">

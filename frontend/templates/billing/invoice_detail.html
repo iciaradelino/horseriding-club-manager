@@ -4,6 +4,9 @@
 {% block topbar_title %}Invoice #{{ invoice.pk|stringformat:"05d" }}{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'billing:invoice_list' %}" class="btn btn-ghost">← All invoices</a>
+{% if invoice.status != 'paid' %}
+<a href="{% url 'billing:invoice_pay' invoice.pk %}" class="btn btn-outline no-print">Mark as paid</a>
+{% endif %}
 <button onclick="window.print()" class="btn btn-primary no-print">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 14h12v6H6z M6 18H3v-6a2 2 0 012-2h14a2 2 0 012 2v6h-3"/></svg>
     Print

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Mark invoice #{{ object.pk }} as paid · Herradura{% endblock %}
+{% block topbar_title %}Mark as paid{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'billing:invoice_detail' object.pk %}" class="btn btn-ghost">← Invoice detail</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Billing</div>
+        <h1 class="page__title">Mark invoice #{{ object.pk|stringformat:"05d" }} as paid</h1>
+        <p class="page__lede">
+            Invoice for <strong>{{ object.membership.member }}</strong> —
+            {{ object.membership.plan.name }} · € {{ object.amount|floatformat:2 }}
+        </p>
+    </div>
+</div>
+
+<div class="card" style="max-width:480px">
+    <div class="card__body">
+        {% url 'billing:invoice_detail' object.pk as cancel_url %}
+        {% include "partials/_form.html" with form=form submit_label="Confirm payment" cancel_url=cancel_url %}
+    </div>
+</div>
+{% endblock %}
