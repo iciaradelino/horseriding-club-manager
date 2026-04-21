@@ -4,7 +4,7 @@
 {% block topbar_title %}Rider profile{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'members:list' %}" class="btn btn-ghost">← Back to riders</a>
-<a href="{% url 'members:update' member.pk %}" class="btn btn-outline">Edit profile</a>
+{% if user.is_admin %}<a href="{% url 'members:update' member.pk %}" class="btn btn-outline">Edit profile</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -96,7 +96,7 @@
                     <dt>Phone</dt><dd class="mono">{{ member.emergency_contact_phone|default:"—" }}</dd>
                 </dl>
                 {% else %}
-                <p class="muted small">No emergency contact on file. <a href="{% url 'members:update' member.pk %}">Add one</a>.</p>
+                <p class="muted small">No emergency contact on file.{% if user.is_admin %} <a href="{% url 'members:update' member.pk %}">Add one</a>.{% endif %}</p>
                 {% endif %}
             </div>
         </div>

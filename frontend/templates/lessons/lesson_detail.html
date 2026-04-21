@@ -4,7 +4,7 @@
 {% block topbar_title %}Lesson · {{ lesson.title }}{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'lessons:list' %}" class="btn btn-ghost">← All lessons</a>
-<a href="{% url 'lessons:update' lesson.pk %}" class="btn btn-outline">Edit</a>
+{% if user.is_admin or user.is_trainer %}<a href="{% url 'lessons:update' lesson.pk %}" class="btn btn-outline">Edit</a>{% endif %}
 {% endblock %}
 
 {% block content %}

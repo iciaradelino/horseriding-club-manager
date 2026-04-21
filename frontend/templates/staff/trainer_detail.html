@@ -4,7 +4,7 @@
 {% block topbar_title %}Trainer profile{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'staff:list' %}" class="btn btn-ghost">← All trainers</a>
-<a href="{% url 'staff:update' trainer.pk %}" class="btn btn-outline">Edit</a>
+{% if user.is_admin %}<a href="{% url 'staff:update' trainer.pk %}" class="btn btn-outline">Edit</a>{% endif %}
 {% endblock %}
 
 {% block content %}

@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>403 · Not allowed · Herradura</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500&family=Geist:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body style="display:grid;place-items:center;min-height:100vh">
+    <div style="text-align:center;max-width:560px;padding:2rem">
+        <div style="font-family:var(--font-display);font-size:7rem;line-height:1;color:var(--color-accent);letter-spacing:-.04em" class="tabular">403</div>
+        <h1 style="font-size:2rem;margin-top:.75rem">You don't have the key to this stall</h1>
+        <p class="muted mt-4">
+            This section is restricted to administrators. If you think this is a mistake,
+            ask a club admin to update your role.
+        </p>
+        <div class="flex gap-2 mt-6" style="justify-content:center;flex-wrap:wrap">
+            <a href="/" class="btn btn-primary">Back to the dashboard</a>
+            <a href="{% url 'accounts:login' %}" class="btn btn-outline">Switch account</a>
+        </div>
+    </div>
+</body>
+</html>

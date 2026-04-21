@@ -24,6 +24,42 @@ Everything is loaded via CDN so there is **no Node.js build step**. `python mana
 
 ---
 
+## Role-aware UI
+
+The backend enforces three roles via `AUTH_USER_MODEL = accounts.User`:
+
+| Role    | Role-check property | Mixins that enforce it                     |
+|---------|---------------------|--------------------------------------------|
+| Admin   | `user.is_admin`     | `AdminRequiredMixin`                       |
+| Trainer | `user.is_trainer`   | `AdminOrTrainerMixin` (alongside admin)    |
+| Member  | `user.is_member`    | `LoginRequiredMixin` only (baseline)       |
+
+The frontend mirrors these checks so users only see controls they can actually use:
+
+**Sidebar**
+- All roles: Dashboard, Calendar, Lessons, Horses, Trainers, Plans
+- Admin + trainer only: Riders (member directory), Memberships, Invoices
+- Plain members see a slimmer sidebar focused on their day-to-day
+
+**Dashboard**
+- All roles: Total riders, Horses on roll, Upcoming lessons, Active memberships (or Trainers directory card for plain members)
+- Admin only: second row with **Revenue this month** and **Billing alerts**
+- Admin + trainer: "Schedule lesson" topbar action
+
+**CRUD controls**
+- "New rider" / "New horse" / "New trainer" / "New membership" / "New invoice" / "Mark as paid" — admin only
+- "Edit" buttons on rider/horse/trainer detail pages — admin only
+- "Schedule lesson" / "Edit lesson" — admin + trainer
+- "Add health record" — admin + trainer
+
+**403 page**
+- If a non-admin types a forbidden URL directly (e.g. `/members/add/`), `AdminRequiredMixin` returns 403 and Django renders `frontend/templates/403.html` — an on-brand page with return-to-dashboard and switch-account links.
+
+**Role header pill**
+- The user's current role is shown in the sidebar footer, colour-coded (amber for Admin, blue for Trainer, plain text for Member) so people can see what permissions they have at a glance.
+
+---
+
 ## Setup
 
 1. Install Python dependencies: `pip install -r backend/requirements.txt`.

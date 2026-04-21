@@ -3,10 +3,10 @@
 {% block title %}Lessons · Herradura{% endblock %}
 {% block topbar_title %}Lessons{% endblock %}
 {% block topbar_actions %}
-<a href="{% url 'lessons:create' %}" class="btn btn-primary">
+{% if user.is_admin or user.is_trainer %}<a href="{% url 'lessons:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     Schedule lesson
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% comment %}
@@ -114,7 +114,7 @@
                     </td>
                     <td class="text-right">
                         <a href="{% url 'lessons:detail' lesson.pk %}" class="btn btn-ghost btn-sm">Open</a>
-                        <a href="{% url 'lessons:update' lesson.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                        {% if user.is_admin or user.is_trainer %}<a href="{% url 'lessons:update' lesson.pk %}" class="btn btn-outline btn-sm">Edit</a>{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -142,8 +142,11 @@
 </div>
 
 {% else %}
-{% url 'lessons:create' as lessons_create_url %}
+{% if user.is_admin or user.is_trainer %}{% url 'lessons:create' as lessons_create_url %}
 {% include "partials/_empty.html" with title="No lessons scheduled yet" message="Create your first lesson to begin populating the schedule." cta_url=lessons_create_url cta_label="Schedule the first lesson" %}
+{% else %}
+{% include "partials/_empty.html" with title="No lessons scheduled yet" message="Lessons will appear here once an admin or trainer schedules one." %}
+{% endif %}
 {% endif %}
 {% endblock %}
 

@@ -4,11 +4,11 @@
 {% block topbar_title %}{{ horse.name }}{% endblock %}
 {% block topbar_actions %}
 <a href="{% url 'horses:list' %}" class="btn btn-ghost">← Back to horses</a>
-<a href="{% url 'horses:update' horse.pk %}" class="btn btn-outline">Edit</a>
-<a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-primary">
+{% if user.is_admin %}<a href="{% url 'horses:update' horse.pk %}" class="btn btn-outline">Edit</a>{% endif %}
+{% if user.is_admin or user.is_trainer %}<a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     New health record
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -42,7 +42,7 @@
         <div class="card mb-6">
             <div class="card__header">
                 <div class="card__title">Health records</div>
-                <a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-outline btn-sm ml-auto">Add record</a>
+                {% if user.is_admin or user.is_trainer %}<a href="{% url 'horses:health_record_create' horse.pk %}" class="btn btn-outline btn-sm ml-auto">Add record</a>{% endif %}
             </div>
             {% if health_records %}
             <div class="card__body" style="padding:0">

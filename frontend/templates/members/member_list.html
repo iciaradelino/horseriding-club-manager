@@ -3,10 +3,10 @@
 {% block title %}Riders · Herradura{% endblock %}
 {% block topbar_title %}Riders{% endblock %}
 {% block topbar_actions %}
-<a href="{% url 'members:create' %}" class="btn btn-primary">
+{% if user.is_admin %}<a href="{% url 'members:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     New rider
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -82,7 +82,7 @@
                     <td class="tabular muted">{{ member.joined_date|date:"j M Y" }}</td>
                     <td class="text-right">
                         <a href="{% url 'members:detail' member.pk %}" class="btn btn-ghost btn-sm">Open</a>
-                        <a href="{% url 'members:update' member.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                        {% if user.is_admin %}<a href="{% url 'members:update' member.pk %}" class="btn btn-outline btn-sm">Edit</a>{% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -91,7 +91,10 @@
     </div>
 </div>
 {% else %}
-{% url 'members:create' as members_create_url %}
+{% if user.is_admin %}{% url 'members:create' as members_create_url %}
 {% include "partials/_empty.html" with title="No riders registered yet" message="Add your first member to start tracking lessons and memberships." cta_url=members_create_url cta_label="Add the first rider" %}
+{% else %}
+{% include "partials/_empty.html" with title="No riders registered yet" message="Ask a club admin to register the first rider." %}
+{% endif %}
 {% endif %}
 {% endblock %}

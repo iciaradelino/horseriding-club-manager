@@ -4,10 +4,10 @@
 {% block title %}Dashboard · Herradura{% endblock %}
 {% block topbar_title %}Dashboard{% endblock %}
 {% block topbar_actions %}
-<a href="{% url 'lessons:create' %}" class="btn btn-primary">
+{% if user.is_admin or user.is_trainer %}<a href="{% url 'lessons:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     Schedule lesson
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -19,23 +19,21 @@
     </div>
 </div>
 
-{# ===== Stat cards ======================================================= #}
+{# ===== Stat cards =======================================================
+   Now sourced entirely from real backend context. The dashboard view at
+   `dashboard/views.py::DashboardView.get_context_data` populates all the
+   values referenced below. Billing-related stats are hidden from plain
+   members since they can't act on them. #}
 <section class="grid-4 stagger mb-6">
     <div class="stat">
         <div class="stat__label">Total Riders</div>
         <div class="stat__value">{{ total_members }}</div>
-        <div class="stat__delta">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 14l6-6 4 4 6-6"/></svg>
-            Registered members
-        </div>
+        <div class="stat__delta">Registered members</div>
     </div>
 
-    {% comment %}
-       the previous implementation used `total_horses|add:"-"|add:available_horses`
-       which does not perform subtraction — django's `add` filter cannot chain that way
-       and silently falls through. we use alpine to compute the difference from the two
-       integers that are already rendered into the page, avoiding any new backend context.
-    {% endcomment %}
+    {# Horse availability — total_horses and available_horses come from the
+       context; the 'in service' figure is their difference, computed with
+       Alpine on values already rendered into the page. #}
     <div class="stat" x-data="{ total: {{ total_horses|default:0 }}, available: {{ available_horses|default:0 }} }">
         <div class="stat__label">Horses on Roll</div>
         <div class="stat__value">{{ total_horses }}</div>
@@ -50,19 +48,43 @@
         <div class="stat__delta">Next 5 scheduled</div>
     </div>
 
+    {% if user.is_admin or user.is_trainer %}
     <div class="stat">
-        <div class="stat__label">Billing Alerts</div>
+        <div class="stat__label">Active memberships</div>
+        <div class="stat__value">{{ active_memberships|default:0 }}</div>
+        <div class="stat__delta">Subscriptions in force</div>
+    </div>
+    {% else %}
+    {# Plain members see lessons-related signal instead of billing internals. #}
+    <div class="stat">
+        <div class="stat__label">Trainers</div>
+        <div class="stat__value">—</div>
+        <div class="stat__delta">See the trainers directory</div>
+    </div>
+    {% endif %}
+</section>
+
+{% if user.is_admin %}
+{# Admin-only billing row: revenue + billing alerts #}
+<section class="grid-2 stagger mb-6" style="grid-template-columns: 1fr 1fr;">
+    <div class="stat">
+        <div class="stat__label">Revenue this month</div>
+        <div class="stat__value tabular">€ {{ revenue_this_month|default:0|floatformat:0 }}</div>
+        <div class="stat__delta">Paid invoices · {% now 'F Y' %}</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">Billing alerts</div>
         <div class="stat__value">{{ pending_invoices|add:overdue_invoices }}</div>
         <div class="stat__delta {% if overdue_invoices %}down{% endif %}">
             {% if overdue_invoices %}
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.86l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.14l-8-14a2 2 0 0 0-3.4 0z"/></svg>
-                {{ overdue_invoices }} overdue
+                {{ overdue_invoices }} overdue · {{ pending_invoices }} pending
             {% else %}
                 {{ pending_invoices }} pending
             {% endif %}
         </div>
     </div>
 </section>
+{% endif %}
 
 {% comment %}
    charts row — only horse utilisation is kept because it is the only metric
@@ -171,8 +193,9 @@
     </div>
     {% else %}
     <div class="card__body">
-        {% url 'lessons:create' as lessons_create_url %}
+        {% if user.is_admin or user.is_trainer %}{% url 'lessons:create' as lessons_create_url %}
         {% include "partials/_empty.html" with title="No lessons scheduled" message="Book the first lesson to see it appear here." cta_url=lessons_create_url cta_label="Schedule a lesson" %}
+        {% else %}{% include "partials/_empty.html" with title="No lessons scheduled" message="No upcoming lessons to show." %}{% endif %}
     </div>
     {% endif %}
 </section>

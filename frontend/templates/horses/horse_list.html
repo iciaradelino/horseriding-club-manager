@@ -3,10 +3,10 @@
 {% block title %}Horses · Herradura{% endblock %}
 {% block topbar_title %}Horses{% endblock %}
 {% block topbar_actions %}
-<a href="{% url 'horses:create' %}" class="btn btn-primary">
+{% if user.is_admin %}<a href="{% url 'horses:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     New horse
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -65,7 +65,10 @@
     </div>
 </div>
 {% else %}
-{% url 'horses:create' as horses_create_url %}
+{% if user.is_admin %}{% url 'horses:create' as horses_create_url %}
 {% include "partials/_empty.html" with title="No horses on the roll yet" message="Add your first horse to start scheduling lessons." cta_url=horses_create_url cta_label="Add the first horse" %}
+{% else %}
+{% include "partials/_empty.html" with title="No horses on the roll yet" message="Ask a club admin to register the first horse." %}
+{% endif %}
 {% endif %}
 {% endblock %}

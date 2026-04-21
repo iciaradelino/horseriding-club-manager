@@ -83,10 +83,14 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 6l2-2h4l2 3 2-3h4l2 2v3l-2 2v5l-2 3h-3l-1-3h-2l-1 3H7l-2-3v-5L3 9V6h2z"/></svg>
                 <span>Horses</span>
             </a>
+            {# Riders list and Trainers list are admin-/trainer-level concerns.
+               A plain 'member' user doesn't need to browse the full member list. #}
+            {% if user.is_admin or user.is_trainer %}
             <a href="{% url 'members:list' %}" class="nav-link {% if ns == 'members' %}is-active{% endif %}">
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="10" r="2.5"/><path stroke-linecap="round" d="M3 20c1-3.5 3-5 6-5s5 1.5 6 5M14 20c.5-2.5 2-4 4.5-4s4 1.5 4.5 4"/></svg>
                 <span>Riders</span>
             </a>
+            {% endif %}
             <a href="{% url 'staff:list' %}" class="nav-link {% if ns == 'staff' %}is-active{% endif %}">
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path stroke-linecap="round" d="M5 20c1-4 3-6 7-6s6 2 7 6"/></svg>
                 <span>Trainers</span>
@@ -97,6 +101,10 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6l1.8 3.8L18 11l-3 2.9.7 4.1L12 16l-3.7 2L9 13.9 6 11l4.2-1.2L12 6z"/></svg>
                 <span>Plans</span>
             </a>
+            {# Memberships and invoices management are admin-only per AdminRequiredMixin
+               on the create/update views. Plain members don't need the global
+               ledger; they see their own memberships on their profile page. #}
+            {% if user.is_admin or user.is_trainer %}
             <a href="{% url 'billing:membership_list' %}" class="nav-link {% if url_name == 'membership_list' %}is-active{% endif %}">
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" d="M3 10h18M7 15h4"/></svg>
                 <span>Memberships</span>
@@ -105,6 +113,7 @@
                 <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3h9l3 3v15l-3-2-3 2-3-2-3 2V3z M9 9h6M9 13h6M9 17h4"/></svg>
                 <span>Invoices</span>
             </a>
+            {% endif %}
 
             {% endwith %}
         </nav>
@@ -115,7 +124,12 @@
             </div>
             <div class="sidebar__user">
                 <div class="sidebar__user-name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="sidebar__user-role">{{ user.get_role_display|default:"Staff" }}</div>
+                <div class="sidebar__user-role">
+                    {% if user.is_admin %}<span style="color: #fbbf24">Admin</span>
+                    {% elif user.is_trainer %}<span style="color: #93c5fd">Trainer</span>
+                    {% elif user.is_member %}<span>Member</span>
+                    {% else %}<span>Staff</span>{% endif %}
+                </div>
             </div>
             <form action="{% url 'accounts:logout' %}" method="post" class="m-0">
                 {% csrf_token %}

@@ -3,10 +3,10 @@
 {% block title %}Trainers · Herradura{% endblock %}
 {% block topbar_title %}Trainers{% endblock %}
 {% block topbar_actions %}
-<a href="{% url 'staff:create' %}" class="btn btn-primary">
+{% if user.is_admin %}<a href="{% url 'staff:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     New trainer
-</a>
+</a>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -39,7 +39,10 @@
     {% endfor %}
 </div>
 {% else %}
-{% url 'staff:create' as staff_create_url %}
+{% if user.is_admin %}{% url 'staff:create' as staff_create_url %}
 {% include "partials/_empty.html" with title="No trainers on record" message="Add your teaching team here so you can assign them to lessons." cta_url=staff_create_url cta_label="Add the first trainer" %}
+{% else %}
+{% include "partials/_empty.html" with title="No trainers on record" message="The club has not added any trainers yet." %}
+{% endif %}
 {% endif %}
 {% endblock %}
