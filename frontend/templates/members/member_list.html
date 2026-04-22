@@ -51,7 +51,12 @@
             </thead>
             <tbody>
                 {% for member in members %}
-                <tr x-show="(q === '' || '{{ member.user.get_full_name|default:member.user.username|lower }}'.includes(q.toLowerCase())) && (skill === 'all' || skill === '{{ member.skill_level }}')">
+                {% comment %}
+ The name is interpolated into a JS string literal below, so we
+                   must `escapejs` it — otherwise an apostrophe in a name like
+                   "O'Brien" would close the string and break Alpine.
+{% endcomment %}
+                <tr x-show="(q === '' || '{{ member.user.get_full_name|default:member.user.username|lower|escapejs }}'.includes(q.toLowerCase())) && (skill === 'all' || skill === '{{ member.skill_level|escapejs }}')">
                     <td>
                         <div style="display:flex;align-items:center;gap:.75rem">
                             <div class="avatar" style="background:var(--color-primary-50);color:var(--color-primary)">{{ member.user.first_name|first|default:member.user.username|first|upper }}</div>

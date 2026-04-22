@@ -98,7 +98,7 @@
             </thead>
             <tbody>
                 {% for lesson in lessons %}
-                <tr x-show="status === 'all' || status === '{{ lesson.status }}'">
+                <tr x-show="status === 'all' || status === '{{ lesson.status|escapejs }}'">
                     <td>
                         <div class="tabular" style="color:var(--color-ink);font-weight:500">{{ lesson.start_time|date:"D j M" }}</div>
                         <div class="muted small mono">{{ lesson.start_time|date:"H:i" }} – {{ lesson.end_time|date:"H:i" }}</div>

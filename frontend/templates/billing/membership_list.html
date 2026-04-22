@@ -35,7 +35,7 @@
             </thead>
             <tbody>
                 {% for ms in memberships %}
-                <tr x-show="status === 'all' || status === '{{ ms.status }}'">
+                <tr x-show="status === 'all' || status === '{{ ms.status|escapejs }}'">
                     <td>
                         <a href="{% url 'members:detail' ms.member.pk %}" class="row-link">{{ ms.member }}</a>
                         <div class="muted small mono">@{{ ms.member.user.username }}</div>

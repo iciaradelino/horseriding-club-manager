@@ -37,8 +37,12 @@
 
     <div class="grid-auto stagger">
         {% for horse in horses %}
+        {% comment %}
+ escapejs so a horse named e.g. "O'Malley" doesn't break the Alpine
+           string literal below — without it, the apostrophe closes the string.
+{% endcomment %}
         <a href="{% url 'horses:detail' horse.pk %}" class="horse-card"
-           x-show="(q === '' || '{{ horse.name|lower }} {{ horse.breed|lower }}'.includes(q.toLowerCase())) && (status === 'all' || status === '{{ horse.status }}')">
+           x-show="(q === '' || '{{ horse.name|lower|escapejs }} {{ horse.breed|lower|escapejs }}'.includes(q.toLowerCase())) && (status === 'all' || status === '{{ horse.status|escapejs }}')">
             <div class="horse-card__photo">
                 {% if horse.photo %}
                     <img src="{{ horse.photo.url }}" alt="{{ horse.name }}">

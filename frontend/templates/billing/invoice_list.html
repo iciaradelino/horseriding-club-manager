@@ -19,9 +19,11 @@
 </div>
 
 {% if invoices %}
-{# Totals and counts are computed client-side from data-* attributes so the
+{% comment %}
+ Totals and counts are computed client-side from data-* attributes so the
    billing summary is always in sync with whatever is rendered, even if the
-   backend later adds pagination or filtering. #}
+   backend later adds pagination or filtering.
+{% endcomment %}
 <div x-data="{
         status: 'all',
         counts: { pending: 0, paid: 0, overdue: 0 },
@@ -77,7 +79,7 @@
             <tbody>
                 {% for invoice in invoices %}
                 <tr data-status="{{ invoice.status }}" data-amount="{{ invoice.amount }}"
-                    x-show="status === 'all' || status === '{{ invoice.status }}'">
+                    x-show="status === 'all' || status === '{{ invoice.status|escapejs }}'">
                     <td class="mono">#{{ invoice.pk|stringformat:"05d" }}</td>
                     <td>
                         <a href="{% url 'members:detail' invoice.membership.member.pk %}" class="row-link">{{ invoice.membership.member }}</a>
