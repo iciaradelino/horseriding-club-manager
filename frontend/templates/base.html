@@ -119,6 +119,14 @@
             </a>
             {% endif %}
 
+            {% if user.is_admin %}
+            <div class="sidebar__section">Admin</div>
+            <a href="{% url 'accounts:user_list' %}" class="nav-link {% if ns == 'accounts' and url_name != 'login' and url_name != 'logout' %}is-active{% endif %}">
+                <svg fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path stroke-linecap="round" stroke-linejoin="round" d="M4 21c1-4 4-6 8-6s7 2 8 6M18 11l2 2 4-4"/></svg>
+                <span>Manage accounts</span>
+            </a>
+            {% endif %}
+
             {% endwith %}
         </nav>
 

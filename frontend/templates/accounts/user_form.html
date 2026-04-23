@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ viewed_user.username }} · Herradura{% endblock %}
+{% block topbar_title %}Edit account: {{ viewed_user.username }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'accounts:user_detail' viewed_user.pk %}" class="btn btn-ghost">← Back</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Admin · users</div>
+        <h1 class="page__title">Editing {{ viewed_user.get_full_name|default:viewed_user.username }}</h1>
+        <p class="page__lede">Change basic info, role, or active status. To change the password use the reset-password page.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width:760px">
+    <div class="card__body">
+        {% url 'accounts:user_detail' viewed_user.pk as cancel_url %}
+        {% include "partials/_form.html" with form=form submit_label="Save account" cancel_url=cancel_url %}
+    </div>
+</div>
+{% endblock %}

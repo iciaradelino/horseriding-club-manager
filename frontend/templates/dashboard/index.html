@@ -3,212 +3,44 @@
 
 {% block title %}Dashboard · Herradura{% endblock %}
 {% block topbar_title %}Dashboard{% endblock %}
+
 {% block topbar_actions %}
-{% if user.is_admin or user.is_trainer %}<a href="{% url 'lessons:create' %}" class="btn btn-primary">
+{% if user.is_admin or user.is_trainer %}
+<a href="{% url 'lessons:create' %}" class="btn btn-primary">
     <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg>
     Schedule lesson
-</a>{% endif %}
+</a>
+{% endif %}
 {% endblock %}
 
 {% block content %}
+
 <div class="page__header">
     <div class="page__header-text">
         <div class="page__eyebrow">{% now "l, j F Y" %}</div>
         <h1 class="page__title">Good day, {{ user.first_name|default:user.username }}.</h1>
-        <p class="page__lede">A quick view of what's happening across the yard today.</p>
+        <p class="page__lede">
+            {% if user.is_admin %}A bird's-eye view of how the club is running.
+            {% elif user.is_trainer %}Your sessions, your week, and your busy hours.
+            {% elif user.is_member %}What you're booked for and what's still in your package.
+            {% else %}Welcome to Herradura.
+            {% endif %}
+        </p>
     </div>
 </div>
 
-{% comment %}
- ===== Stat cards =======================================================
-   Now sourced entirely from real backend context. The dashboard view at
-   `dashboard/views.py::DashboardView.get_context_data` populates all the
-   values referenced below. Billing-related stats are hidden from plain
-   members since they can't act on them.
-{% endcomment %}
-<section class="grid-4 stagger mb-6">
-    <div class="stat">
-        <div class="stat__label">Total Riders</div>
-        <div class="stat__value">{{ total_members }}</div>
-        <div class="stat__delta">Registered members</div>
-    </div>
-
-    {% comment %}
- Horse availability — total_horses and available_horses come from the
-       context; the 'in service' figure is their difference, computed with
-       Alpine on values already rendered into the page.
-{% endcomment %}
-    <div class="stat" x-data="{ total: {{ total_horses|default:0 }}, available: {{ available_horses|default:0 }} }">
-        <div class="stat__label">Horses on Roll</div>
-        <div class="stat__value">{{ total_horses }}</div>
-        <div class="stat__delta">
-            {{ available_horses }} available, <span x-text="total - available"></span> in service
-        </div>
-    </div>
-
-    <div class="stat">
-        <div class="stat__label">Upcoming Lessons</div>
-        <div class="stat__value">{{ upcoming_lessons|length }}</div>
-        <div class="stat__delta">Next 5 scheduled</div>
-    </div>
-
-    {% if user.is_admin or user.is_trainer %}
-    <div class="stat">
-        <div class="stat__label">Active memberships</div>
-        <div class="stat__value">{{ active_memberships|default:0 }}</div>
-        <div class="stat__delta">Subscriptions in force</div>
-    </div>
-    {% else %}
-    {# Plain members see lessons-related signal instead of billing internals. #}
-    <div class="stat">
-        <div class="stat__label">Trainers</div>
-        <div class="stat__value">—</div>
-        <div class="stat__delta">See the trainers directory</div>
-    </div>
-    {% endif %}
-</section>
-
 {% if user.is_admin %}
-{# Admin-only billing row: revenue + billing alerts #}
-<section class="grid-2 stagger mb-6" style="grid-template-columns: 1fr 1fr;">
-    <div class="stat">
-        <div class="stat__label">Revenue this month</div>
-        <div class="stat__value tabular">€ {{ revenue_this_month|default:0|floatformat:0 }}</div>
-        <div class="stat__delta">Paid invoices · {% now 'F Y' %}</div>
-    </div>
-    <div class="stat">
-        <div class="stat__label">Billing alerts</div>
-        <div class="stat__value">{{ pending_invoices|add:overdue_invoices }}</div>
-        <div class="stat__delta {% if overdue_invoices %}down{% endif %}">
-            {% if overdue_invoices %}
-                {{ overdue_invoices }} overdue · {{ pending_invoices }} pending
-            {% else %}
-                {{ pending_invoices }} pending
-            {% endif %}
-        </div>
-    </div>
-</section>
+    {% include "dashboard/_partials/admin.html" %}
+{% elif user.is_trainer %}
+    {% include "dashboard/_partials/trainer.html" %}
+{% elif user.is_member %}
+    {% include "dashboard/_partials/member.html" %}
+{% else %}
+    {# A logged-in user with no role (rare) gets a minimal welcome #}
+    <div class="card"><div class="card__body">
+        <p class="muted">Your account doesn't have a role assigned yet. Please contact a club administrator.</p>
+    </div></div>
 {% endif %}
-
-{% comment %}
-    Charts / action row.
-    For plain members the "Things to action" card would expose invoice counts
-    and invoice URLs they have no permission to use, so we swap the layout to
-    full-width horse utilisation for them and only show the finance card to
-    users who can act on it (admin + trainer).
-{% endcomment %}
-<section class="grid-2 mb-6" style="grid-template-columns: {% if user.is_admin or user.is_trainer %}1fr 1fr{% else %}1fr{% endif %};">
-    <div class="card">
-        <div class="card__header">
-            <div>
-                <div class="stat__label mb-2">Utilisation</div>
-                <div class="card__title">Horse availability</div>
-            </div>
-        </div>
-        <div class="card__body">
-            <div style="height: 260px;">
-                <canvas id="chart-horses"
-                        data-total="{{ total_horses }}"
-                        data-available="{{ available_horses }}"></canvas>
-            </div>
-        </div>
-    </div>
-
-    {% if user.is_admin or user.is_trainer %}
-    {% comment %}
- Alert panel — entirely driven by real backend context values. Hidden from
-       plain members because both the invoice counts and the "Chase them now" /
-       "Review" links point at /billing/invoices/ which members cannot use.
-{% endcomment %}
-    <div class="card">
-        <div class="card__header">
-            <div>
-                <div class="stat__label mb-2">Attention</div>
-                <div class="card__title">Things to action</div>
-            </div>
-        </div>
-        <div class="card__body">
-            {% if overdue_invoices or pending_invoices %}
-                <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.85rem">
-                    {% if overdue_invoices %}
-                    <li style="display:flex;gap:.8rem;align-items:flex-start;padding:.6rem;background:var(--color-danger-50);border-radius:8px">
-                        <svg width="20" height="20" fill="none" stroke="var(--color-danger)" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.3 3.86l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3.14l-8-14a2 2 0 0 0-3.4 0z"/></svg>
-                        <div style="flex:1">
-                            <div style="color:var(--color-ink);font-weight:500">{{ overdue_invoices }} overdue invoice{{ overdue_invoices|pluralize }}</div>
-                            <a href="{% url 'billing:invoice_list' %}" class="muted small" style="text-decoration:underline">Chase them now →</a>
-                        </div>
-                    </li>
-                    {% endif %}
-                    {% if pending_invoices %}
-                    <li style="display:flex;gap:.8rem;align-items:flex-start;padding:.6rem;background:var(--color-surface-alt);border-radius:8px">
-                        <svg width="20" height="20" fill="none" stroke="var(--color-warning)" stroke-width="2" viewBox="0 0 24 24" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 8v4l3 2"/></svg>
-                        <div style="flex:1">
-                            <div style="color:var(--color-ink);font-weight:500">{{ pending_invoices }} invoice{{ pending_invoices|pluralize }} pending</div>
-                            <a href="{% url 'billing:invoice_list' %}" class="muted small" style="text-decoration:underline">Review →</a>
-                        </div>
-                    </li>
-                    {% endif %}
-                </ul>
-            {% else %}
-                <div style="text-align:center;padding:1.5rem 0;color:var(--color-muted)">
-                    <svg width="36" height="36" fill="none" stroke="var(--color-success)" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto .6rem;display:block"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 12l3 3 5-6"/></svg>
-                    <div style="color:var(--color-ink);font-weight:500">All clear</div>
-                    <div class="small muted">No overdue or pending invoices.</div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    {% endif %}
-</section>
-
-{# ===== Upcoming lessons ================================================ #}
-<section class="card mb-6">
-    <div class="card__header">
-        <div>
-            <div class="stat__label mb-2">Schedule</div>
-            <div class="card__title">Next five lessons</div>
-        </div>
-        <a href="{% url 'lessons:list' %}" class="btn btn-outline btn-sm ml-auto">View all</a>
-    </div>
-
-    {% if upcoming_lessons %}
-    <div class="table-wrap" style="border: none; border-radius: 0;">
-        <table class="data">
-            <thead>
-                <tr>
-                    <th>When</th>
-                    <th>Lesson</th>
-                    <th>Trainer</th>
-                    <th>Horse</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for lesson in upcoming_lessons %}
-                <tr>
-                    <td>
-                        <div class="tabular" style="color:var(--color-ink);font-weight:500">{{ lesson.start_time|date:"D j M" }}</div>
-                        <div class="muted small mono">{{ lesson.start_time|date:"H:i" }} – {{ lesson.end_time|date:"H:i" }}</div>
-                    </td>
-                    <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
-                    <td>{% if lesson.trainer %}{{ lesson.trainer }}{% else %}<span class="muted">—</span>{% endif %}</td>
-                    <td>{% if lesson.horse %}{{ lesson.horse.name }}{% else %}<span class="muted">—</span>{% endif %}</td>
-                    <td class="text-right">
-                        <a href="{% url 'lessons:detail' lesson.pk %}" class="btn btn-ghost btn-sm">Open →</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <div class="card__body">
-        {% if user.is_admin or user.is_trainer %}{% url 'lessons:create' as lessons_create_url %}
-        {% include "partials/_empty.html" with title="No lessons scheduled" message="Book the first lesson to see it appear here." cta_url=lessons_create_url cta_label="Schedule a lesson" %}
-        {% else %}{% include "partials/_empty.html" with title="No lessons scheduled" message="No upcoming lessons to show." %}{% endif %}
-    </div>
-    {% endif %}
-</section>
 
 {% endblock %}
 

@@ -1,0 +1,204 @@
+{% load dashboard_extras %}
+{# ============================================================================
+   TRAINER DASHBOARD — today, this week, and your usual hours.
+============================================================================ #}
+
+{% if not trainer_profile %}
+<div class="card"><div class="card__body">
+    <p class="muted">Your trainer profile hasn't been set up yet — ask a club admin to create one for you.</p>
+</div></div>
+{% else %}
+
+{# ─── Stat strip ──────────────────────────────────────────────────────── #}
+<section class="grid-3 stagger mb-6">
+    <div class="stat">
+        <div class="stat__label">Sessions today</div>
+        <div class="stat__value">{{ sessions_today|length }}</div>
+        <div class="stat__delta">{% now "l" %}</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">This week</div>
+        {# Sum of lessons across the 7 days, computed in the template by counting
+           data-week-lesson elements rendered into the schedule grid below. #}
+        <div class="stat__value" id="stat-week-total">…</div>
+        <div class="stat__delta">Lessons booked Mon–Sun</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">Status</div>
+        <div class="stat__value" style="font-size:1.5rem;font-family:var(--font-sans);font-weight:500">
+            {% if trainer_profile.is_active %}Active{% else %}Inactive{% endif %}
+        </div>
+        <div class="stat__delta">{{ trainer_profile.specialisation|default:"No specialisation set" }}</div>
+    </div>
+</section>
+
+{# ─── Today's sessions ────────────────────────────────────────────────── #}
+<section class="card mb-6">
+    <div class="card__header">
+        <div>
+            <div class="stat__label mb-2">Today</div>
+            <div class="card__title">Your sessions today</div>
+        </div>
+    </div>
+    {% if sessions_today %}
+    <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data">
+            <thead><tr><th>Time</th><th>Lesson</th><th>Horse</th><th>Riders</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                {% for lesson in sessions_today %}
+                <tr>
+                    <td class="tabular mono" style="color:var(--color-ink);font-weight:500">
+                        {{ lesson.start_time|date:"H:i" }}–{{ lesson.end_time|date:"H:i" }}
+                    </td>
+                    <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                    <td>{{ lesson.horse.name|default:"—" }}</td>
+                    <td>
+                        {% for m in lesson.members.all %}<span class="muted small">{{ m }}{% if not forloop.last %}, {% endif %}</span>{% empty %}<span class="muted small">—</span>{% endfor %}
+                    </td>
+                    <td>
+                        {% if lesson.status == 'scheduled' %}<span class="badge badge-info">Scheduled</span>
+                        {% elif lesson.status == 'completed' %}<span class="badge badge-success">Completed</span>
+                        {% else %}<span class="badge badge-danger">Cancelled</span>{% endif %}
+                    </td>
+                    <td class="text-right">
+                        <a href="{% url 'lessons:detail' lesson.pk %}" class="btn btn-ghost btn-sm">Open</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card__body">
+        <div style="text-align:center;padding:1.25rem 0;color:var(--color-muted)">
+            <div style="color:var(--color-ink);font-weight:500">Nothing on your sheet for today.</div>
+            <div class="small muted">Enjoy the quiet — or check the week ahead below.</div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+{# ─── This week ───────────────────────────────────────────────────────── #}
+<section class="card mb-6">
+    <div class="card__header">
+        <div>
+            <div class="stat__label mb-2">This week</div>
+            <div class="card__title">Sessions by day</div>
+        </div>
+    </div>
+    <div class="card__body">
+        <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.6rem">
+            {% for d in weekly_schedule %}
+            <div style="border:1px solid {% if d.is_today %}var(--color-accent){% else %}var(--color-border-soft){% endif %};border-radius:8px;padding:.6rem;background:{% if d.is_today %}var(--color-accent-50){% else %}var(--color-surface){% endif %};min-height:140px;display:flex;flex-direction:column;gap:.4rem">
+                <div style="display:flex;align-items:baseline;gap:.4rem;border-bottom:1px solid var(--color-border-soft);padding-bottom:.3rem">
+                    <span class="page__eyebrow" style="margin:0">{{ d.name }}</span>
+                    <span class="muted small">{{ d.date|date:"j M" }}</span>
+                </div>
+                {% for lesson in d.lessons %}
+                <a href="{% url 'lessons:detail' lesson.pk %}" data-week-lesson
+                   style="display:block;padding:.4rem;border-radius:6px;background:var(--color-primary);color:#fff;font-size:.74rem;line-height:1.25;text-decoration:none">
+                    <div class="mono" style="font-weight:600">{{ lesson.start_time|date:"H:i" }}</div>
+                    <div style="opacity:.85">{{ lesson.title|truncatechars:24 }}</div>
+                </a>
+                {% empty %}
+                <div class="muted small" style="text-align:center;padding-top:.6rem">—</div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<script>
+    // Sum the lesson chips rendered into the weekly grid above
+    document.addEventListener('DOMContentLoaded', function () {
+        const el = document.getElementById('stat-week-total');
+        if (el) el.textContent = document.querySelectorAll('[data-week-lesson]').length;
+    });
+</script>
+
+{# ─── Recent activity + heatmap ───────────────────────────────────────── #}
+<section class="grid-2 mb-6" style="grid-template-columns: 1fr 1.2fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Recent activity</div>
+                <div class="card__title">Latest lessons assigned to you</div>
+            </div>
+        </div>
+        {% if recent_activity %}
+        <div class="card__body" style="padding:0">
+            {% for lesson in recent_activity %}
+            <a href="{% url 'lessons:detail' lesson.pk %}"
+               style="display:flex;gap:.7rem;align-items:flex-start;padding:.85rem 1.2rem;border-bottom:1px solid var(--color-border-soft);text-decoration:none">
+                <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:.45rem;background:
+                    {% if lesson.status == 'scheduled' %}var(--color-primary)
+                    {% elif lesson.status == 'completed' %}var(--color-success)
+                    {% else %}var(--color-danger){% endif %}"></div>
+                <div style="flex:1;min-width:0">
+                    <div style="color:var(--color-ink);font-weight:500">{{ lesson.title }}</div>
+                    <div class="muted small">
+                        {% if lesson.status == 'scheduled' %}Scheduled
+                        {% elif lesson.status == 'completed' %}Completed
+                        {% else %}Cancelled{% endif %}
+                        · {{ lesson.start_time|date:"j M · H:i" }}
+                        {% if lesson.horse %}· {{ lesson.horse.name }}{% endif %}
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card__body"><p class="muted small" style="text-align:center;padding:2rem 0">No recent lesson activity.</p></div>
+        {% endif %}
+        <div class="card__footer">
+            <span class="muted small">Note: status reflects the lesson's <em>current</em> state — Django doesn't track per-edit history.</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Patterns</div>
+                <div class="card__title">When you're busiest · last 60 days</div>
+            </div>
+        </div>
+        <div class="card__body">
+            {% if heatmap_max %}
+            <div style="overflow-x:auto">
+                <table style="border-collapse:separate;border-spacing:3px;font-size:.7rem;color:var(--color-muted)">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {% for h in heatmap_hours %}<th style="text-align:center;font-weight:500;padding:0 .15rem">{{ h }}</th>{% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for day in heatmap_days %}
+                        <tr>
+                            <th style="text-align:right;padding-right:.5rem;font-weight:500">{{ day }}</th>
+                            {% for v in heatmap|index:forloop.counter0 %}
+                            <td title="{{ v }} lesson{{ v|pluralize }}"
+                                style="width:22px;height:22px;border-radius:4px;background-color:rgba(31,58,42,{% widthratio v heatmap_max 100 as pct %}{% if v %}{{ pct }}{% else %}0{% endif %}%);
+                                       border: 1px solid {% if v %}var(--color-primary-50){% else %}var(--color-border-soft){% endif %}"></td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="muted small mt-4" style="display:flex;gap:.5rem;align-items:center">
+                <span>Quieter</span>
+                <span style="display:inline-block;width:14px;height:14px;background:rgba(31,58,42,.1);border-radius:3px"></span>
+                <span style="display:inline-block;width:14px;height:14px;background:rgba(31,58,42,.4);border-radius:3px"></span>
+                <span style="display:inline-block;width:14px;height:14px;background:rgba(31,58,42,.7);border-radius:3px"></span>
+                <span style="display:inline-block;width:14px;height:14px;background:rgba(31,58,42,1);border-radius:3px"></span>
+                <span>Busier</span>
+            </div>
+            {% else %}
+            <p class="muted small" style="text-align:center;padding:2rem 0">No lessons in the last 60 days.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endif %}

@@ -1,0 +1,169 @@
+{# ============================================================================
+   MEMBER DASHBOARD — what you have booked and what's in your package.
+============================================================================ #}
+
+{% if not member_profile %}
+<div class="card"><div class="card__body">
+    <p class="muted">Your member profile hasn't been set up yet — ask a club admin to register you.</p>
+</div></div>
+{% else %}
+
+{# ─── Hero: next lesson ───────────────────────────────────────────────── #}
+{% if my_next_lesson %}
+<section class="card mb-6" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-700));color:#faf7f1">
+    <div class="card__body" style="padding:2rem;display:grid;grid-template-columns:1fr auto;gap:1.5rem;align-items:center">
+        <div>
+            <div class="page__eyebrow" style="color:var(--color-accent)">Your next lesson</div>
+            <h2 style="font-size:1.75rem;color:#fff;margin-top:.5rem">{{ my_next_lesson.title }}</h2>
+            <div style="margin-top:.6rem;display:flex;gap:1.25rem;flex-wrap:wrap;color:rgba(255,255,255,.8)">
+                <div><strong style="color:#fff">{{ my_next_lesson.start_time|date:"l j F" }}</strong></div>
+                <div class="mono">{{ my_next_lesson.start_time|date:"H:i" }} – {{ my_next_lesson.end_time|date:"H:i" }}</div>
+                {% if my_next_lesson.trainer %}<div>Trainer: <strong style="color:#fff">{{ my_next_lesson.trainer }}</strong></div>{% endif %}
+                {% if my_next_lesson.horse %}<div>Horse: <strong style="color:#fff">{{ my_next_lesson.horse.name }}</strong></div>{% endif %}
+            </div>
+        </div>
+        <a href="{% url 'lessons:detail' my_next_lesson.pk %}" class="btn btn-accent">View details →</a>
+    </div>
+</section>
+{% endif %}
+
+{# ─── Stat strip ──────────────────────────────────────────────────────── #}
+<section class="grid-3 stagger mb-6">
+    <div class="stat">
+        <div class="stat__label">Upcoming lessons</div>
+        <div class="stat__value">{{ my_next_lessons|length }}</div>
+        <div class="stat__delta">In the next few weeks</div>
+    </div>
+
+    <div class="stat">
+        <div class="stat__label">Package sessions left</div>
+        {% if sessions_quota %}
+            <div class="stat__value">{{ sessions_remaining }}<span class="muted" style="font-size:1rem;font-weight:400"> / {{ sessions_quota }}</span></div>
+            <div class="stat__delta">{{ sessions_used }} used this cycle</div>
+        {% else %}
+            <div class="stat__value" style="font-family:var(--font-sans);font-size:1.4rem;font-weight:500">Unlimited</div>
+            <div class="stat__delta">{% if my_active_membership %}{{ my_active_membership.plan.name }}{% else %}No active plan{% endif %}</div>
+        {% endif %}
+    </div>
+
+    <div class="stat">
+        <div class="stat__label">Skill level</div>
+        <div class="stat__value" style="font-size:1.4rem;font-family:var(--font-sans);font-weight:500">
+            {{ member_profile.get_skill_level_display }}
+        </div>
+        <div class="stat__delta">Member since {{ member_profile.joined_date|date:"F Y" }}</div>
+    </div>
+</section>
+
+{# ─── Charts row ──────────────────────────────────────────────────────── #}
+<section class="grid-2 mb-6" style="grid-template-columns: 1.4fr 1fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Activity</div>
+                <div class="card__title">Your monthly riding · last 6 months</div>
+            </div>
+        </div>
+        <div class="card__body">
+            {% if activity_has_data %}
+            <div style="height:240px"><canvas id="chart-my-activity"
+                    data-labels='{{ activity_months }}'
+                    data-values='{{ activity_values }}'></canvas></div>
+            {% else %}
+            <p class="muted small" style="text-align:center;padding:2rem 0">No completed lessons yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Horses</div>
+                <div class="card__title">Who you've been riding</div>
+            </div>
+        </div>
+        <div class="card__body">
+            {% if horse_usage_count %}
+            <div style="height:240px"><canvas id="chart-my-horses"
+                    data-labels='{{ horse_usage_labels }}'
+                    data-values='{{ horse_usage_values }}'></canvas></div>
+            {% else %}
+            <p class="muted small" style="text-align:center;padding:2rem 0">No horse history yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{# ─── Upcoming lessons list ───────────────────────────────────────────── #}
+<section class="card mb-6">
+    <div class="card__header">
+        <div>
+            <div class="stat__label mb-2">Schedule</div>
+            <div class="card__title">Your upcoming lessons</div>
+        </div>
+        <a href="{% url 'lessons:list' %}" class="btn btn-outline btn-sm ml-auto">All lessons</a>
+    </div>
+    {% if my_next_lessons %}
+    <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data">
+            <thead><tr><th>When</th><th>Lesson</th><th>Trainer</th><th>Horse</th></tr></thead>
+            <tbody>
+                {% for lesson in my_next_lessons %}
+                <tr>
+                    <td>
+                        <div class="tabular" style="color:var(--color-ink);font-weight:500">{{ lesson.start_time|date:"D j M" }}</div>
+                        <div class="muted small mono">{{ lesson.start_time|date:"H:i" }} – {{ lesson.end_time|date:"H:i" }}</div>
+                    </td>
+                    <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                    <td>{{ lesson.trainer|default:"—" }}</td>
+                    <td>{{ lesson.horse.name|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card__body">
+        <div style="text-align:center;padding:1.5rem 0;color:var(--color-muted)">
+            <div style="color:var(--color-ink);font-weight:500">No upcoming lessons</div>
+            <div class="small muted">Speak to a trainer to get on the schedule.</div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+{# ─── Outstanding payments ───────────────────────────────────────────── #}
+{% if my_outstanding_invoices %}
+<section class="card mb-6" style="border-left:4px solid var(--color-danger)">
+    <div class="card__header">
+        <div>
+            <div class="stat__label mb-2" style="color:var(--color-danger)">Action needed</div>
+            <div class="card__title">Outstanding payments</div>
+        </div>
+    </div>
+    <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data">
+            <thead><tr><th>Invoice</th><th>Plan</th><th>Due</th><th class="text-right">Amount</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for invoice in my_outstanding_invoices %}
+                <tr>
+                    <td class="mono">#{{ invoice.pk|stringformat:"05d" }}</td>
+                    <td>{{ invoice.membership.plan.name }}</td>
+                    <td class="tabular">{{ invoice.due_date|date:"j M Y" }}</td>
+                    <td class="text-right tabular" style="font-weight:500">€ {{ invoice.amount|floatformat:2 }}</td>
+                    <td>
+                        {% if invoice.status == 'overdue' %}<span class="badge badge-danger">Overdue</span>
+                        {% else %}<span class="badge badge-warning">Pending</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="card__footer">
+        <span class="muted small">Speak to the club office to settle these invoices.</span>
+    </div>
+</section>
+{% endif %}
+
+{% endif %}

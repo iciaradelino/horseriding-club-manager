@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}{{ viewed_user.username }} · Account · Herradura{% endblock %}
+{% block topbar_title %}Account: {{ viewed_user.username }}{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'accounts:user_list' %}" class="btn btn-ghost">← All accounts</a>
+<a href="{% url 'accounts:user_update' viewed_user.pk %}" class="btn btn-outline">Edit</a>
+<a href="{% url 'accounts:user_password' viewed_user.pk %}" class="btn btn-outline">Reset password</a>
+{% if viewed_user != user %}
+<a href="{% url 'accounts:user_delete' viewed_user.pk %}" class="btn btn-danger">Delete</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text" style="display:flex;gap:1.25rem;align-items:center">
+        <div class="avatar" style="width:80px;height:80px;font-size:2rem;background:var(--color-primary);color:var(--color-accent)">
+            {{ viewed_user.first_name|first|default:viewed_user.username|first|upper }}
+        </div>
+        <div>
+            <div class="page__eyebrow">User account</div>
+            <h1 class="page__title">{{ viewed_user.get_full_name|default:viewed_user.username }}</h1>
+            <div class="flex gap-2 mt-2 items-center" style="flex-wrap:wrap">
+                <span class="muted mono">@{{ viewed_user.username }}</span>
+                <span class="muted">·</span>
+                {% if viewed_user.role == 'admin' %}<span class="badge badge-accent">Admin</span>
+                {% elif viewed_user.role == 'trainer' %}<span class="badge badge-info">Trainer</span>
+                {% elif viewed_user.role == 'member' %}<span class="badge badge-neutral">Member</span>{% endif %}
+                {% if viewed_user.is_active %}<span class="badge badge-success">Active</span>
+                {% else %}<span class="badge badge-danger">Disabled</span>{% endif %}
+                {% if viewed_user.is_staff %}<span class="badge badge-warning">Staff (admin-site access)</span>{% endif %}
+                {% if viewed_user == user %}<span class="badge badge-info">This is you</span>{% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="detail-grid">
+    <div>
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">Profile</div></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Username</dt><dd class="mono">@{{ viewed_user.username }}</dd>
+                    <dt>First name</dt><dd>{{ viewed_user.first_name|default:"—" }}</dd>
+                    <dt>Last name</dt><dd>{{ viewed_user.last_name|default:"—" }}</dd>
+                    <dt>Email</dt><dd>{{ viewed_user.email|default:"—" }}</dd>
+                    <dt>Phone</dt><dd class="mono">{{ viewed_user.phone|default:"—" }}</dd>
+                    <dt>Date joined</dt><dd class="tabular">{{ viewed_user.date_joined|date:"j F Y" }}</dd>
+                    <dt>Last login</dt><dd class="tabular">{% if viewed_user.last_login %}{{ viewed_user.last_login|date:"j M Y · H:i" }}{% else %}<span class="muted">Never</span>{% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <aside>
+        <div class="card mb-6">
+            <div class="card__header"><div class="card__title">Permissions</div></div>
+            <div class="card__body">
+                <dl class="kv">
+                    <dt>Role</dt><dd>{{ viewed_user.get_role_display }}</dd>
+                    <dt>Active</dt><dd>{% if viewed_user.is_active %}Yes{% else %}No{% endif %}</dd>
+                    <dt>Django staff</dt><dd>{% if viewed_user.is_staff %}Yes{% else %}No{% endif %}</dd>
+                    <dt>Superuser</dt><dd>{% if viewed_user.is_superuser %}Yes{% else %}No{% endif %}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card__header"><div class="card__title">Linked profile</div></div>
+            <div class="card__body">
+                {% if viewed_user.role == 'member' %}
+                    {% with mp=viewed_user.member_profile %}
+                        {% if mp %}<a href="{% url 'members:detail' mp.pk %}" class="btn btn-outline btn-sm">View rider profile →</a>
+                        {% else %}<p class="muted small">No member profile linked.</p>{% endif %}
+                    {% endwith %}
+                {% elif viewed_user.role == 'trainer' %}
+                    {% with tp=viewed_user.trainer_profile %}
+                        {% if tp %}<a href="{% url 'staff:detail' tp.pk %}" class="btn btn-outline btn-sm">View trainer profile →</a>
+                        {% else %}<p class="muted small">No trainer profile linked.</p>{% endif %}
+                    {% endwith %}
+                {% else %}
+                    <p class="muted small">Admin accounts don't have a domain profile.</p>
+                {% endif %}
+            </div>
+        </div>
+    </aside>
+</div>
+{% endblock %}

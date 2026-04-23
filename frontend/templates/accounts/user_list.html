@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Accounts · Herradura{% endblock %}
+{% block topbar_title %}Account management{% endblock %}
+{% block topbar_actions %}
+<a href="{% url 'dashboard:index' %}" class="btn btn-ghost">← Back to dashboard</a>
+{% endblock %}
+
+{% block content %}
+<div class="page__header">
+    <div class="page__header-text">
+        <div class="page__eyebrow">Admin · users</div>
+        <h1 class="page__title">All accounts</h1>
+        <p class="page__lede">Every account in the club. Click a row to view, edit role &amp; status, reset the password, or remove the account.</p>
+    </div>
+</div>
+
+<div x-data="{ q: '', role: 'all' }" class="card">
+    <div class="card__header">
+        <div style="flex:1;display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+            <div style="position:relative;flex:1;min-width:220px">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position:absolute;left:.8rem;top:50%;transform:translateY(-50%);color:var(--color-muted)"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.3-4.3"/></svg>
+                <input type="text" x-model="q" placeholder="Search by username, name or email…"
+                       style="width:100%;padding:.55rem .75rem .55rem 2.25rem;border:1px solid var(--color-border);border-radius:6px;background:var(--color-paper);font:inherit">
+            </div>
+            <select x-model="role" style="padding:.55rem .8rem;border:1px solid var(--color-border);border-radius:6px;background:var(--color-paper);font:inherit">
+                <option value="all">All roles</option>
+                <option value="admin">Admin</option>
+                <option value="trainer">Trainer</option>
+                <option value="member">Member</option>
+            </select>
+        </div>
+        <div class="muted small">{{ paginator.count|default:users|length }} account{{ paginator.count|default:users|length|pluralize }}</div>
+    </div>
+
+    {% if users %}
+    <div class="table-wrap" style="border:none;border-radius:0">
+        <table class="data">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr x-show="(q === '' || ('{{ u.username|lower|escapejs }} {{ u.get_full_name|lower|escapejs }} {{ u.email|lower|escapejs }}').includes(q.toLowerCase())) && (role === 'all' || role === '{{ u.role|escapejs }}')">
+                    <td>
+                        <div style="display:flex;align-items:center;gap:.75rem">
+                            <div class="avatar" style="background:var(--color-primary-50);color:var(--color-primary)">{{ u.first_name|first|default:u.username|first|upper }}</div>
+                            <div>
+                                <a href="{% url 'accounts:user_detail' u.pk %}" class="row-link">{{ u.get_full_name|default:u.username }}</a>
+                                <div class="muted small mono">@{{ u.username }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="muted">{{ u.email|default:"—" }}</td>
+                    <td>
+                        {% if u.role == 'admin' %}<span class="badge badge-accent">Admin</span>
+                        {% elif u.role == 'trainer' %}<span class="badge badge-info">Trainer</span>
+                        {% elif u.role == 'member' %}<span class="badge badge-neutral">Member</span>
+                        {% else %}<span class="badge badge-neutral">{{ u.role }}</span>{% endif %}
+                    </td>
+                    <td>
+                        {% if u.is_active %}<span class="badge badge-success">Active</span>
+                        {% else %}<span class="badge badge-danger">Disabled</span>{% endif %}
+                    </td>
+                    <td class="text-right">
+                        <a href="{% url 'accounts:user_detail' u.pk %}" class="btn btn-ghost btn-sm">Open</a>
+                        <a href="{% url 'accounts:user_update' u.pk %}" class="btn btn-outline btn-sm">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if is_paginated %}
+    <div class="card__footer flex items-center gap-3">
+        <span class="muted small" style="margin-right:auto">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}" class="btn btn-outline btn-sm">← Previous</a>{% endif %}
+        {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}" class="btn btn-outline btn-sm">Next →</a>{% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="card__body">{% include "partials/_empty.html" with title="No accounts found" message="There are no user accounts in the database." %}</div>
+    {% endif %}
+</div>
+{% endblock %}

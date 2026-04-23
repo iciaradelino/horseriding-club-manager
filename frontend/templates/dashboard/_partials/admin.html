@@ -1,0 +1,209 @@
+{# ============================================================================
+   ADMIN DASHBOARD — club-wide health and finance.
+   Every value here comes from DashboardView._build_admin_context. No fake data.
+============================================================================ #}
+
+{# ─── Stat strip ──────────────────────────────────────────────────────── #}
+<section class="grid-4 stagger mb-6">
+    <div class="stat">
+        <div class="stat__label">Active members</div>
+        <div class="stat__value">{{ total_members }}</div>
+        <div class="stat__delta">{{ active_memberships }} active subscription{{ active_memberships|pluralize }}</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">Active trainers</div>
+        <div class="stat__value">{{ active_trainers }}</div>
+        <div class="stat__delta">Currently teaching</div>
+    </div>
+    <div class="stat" x-data="{ total: {{ total_horses|default:0 }}, available: {{ available_horses|default:0 }} }">
+        <div class="stat__label">Active horses</div>
+        <div class="stat__value">{{ total_horses }}</div>
+        <div class="stat__delta">{{ available_horses }} available, <span x-text="total - available"></span> in service</div>
+    </div>
+    <div class="stat">
+        <div class="stat__label">Revenue this month</div>
+        <div class="stat__value tabular">€ {{ revenue_this_month|default:0|floatformat:0 }}</div>
+        <div class="stat__delta">Paid invoices · {% now 'F Y' %}</div>
+    </div>
+</section>
+
+{# ─── Charts row: revenue + memberships time series ──────────────────── #}
+<section class="grid-2 mb-6" style="grid-template-columns: 1fr 1fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Finance</div>
+                <div class="card__title">Monthly revenue · last 6 months</div>
+            </div>
+        </div>
+        <div class="card__body">
+            <div style="height:240px">
+                <canvas id="chart-revenue-monthly"
+                        data-labels='{{ chart_months }}'
+                        data-values='{{ chart_revenue }}'></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Growth</div>
+                <div class="card__title">New memberships · last 6 months</div>
+            </div>
+        </div>
+        <div class="card__body">
+            <div style="height:240px">
+                <canvas id="chart-memberships-monthly"
+                        data-labels='{{ chart_months }}'
+                        data-values='{{ chart_memberships }}'></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ─── Workload donut + missing-payments table ────────────────────────── #}
+<section class="grid-2 mb-6" style="grid-template-columns: 1fr 1.4fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Workload</div>
+                <div class="card__title">Lessons per horse</div>
+            </div>
+        </div>
+        <div class="card__body">
+            {% if horse_workload_count %}
+            <div style="height:260px">
+                <canvas id="chart-horse-workload"
+                        data-labels='{{ horse_workload_labels }}'
+                        data-values='{{ horse_workload_values }}'></canvas>
+            </div>
+            {% else %}
+            <p class="muted small" style="text-align:center;padding:2rem 0">No lesson data yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Action needed</div>
+                <div class="card__title">Missing payments</div>
+            </div>
+            <a href="{% url 'billing:invoice_list' %}" class="btn btn-outline btn-sm ml-auto">All invoices</a>
+        </div>
+        {% if overdue_invoice_rows %}
+        <div class="table-wrap" style="border:none;border-radius:0">
+            <table class="data">
+                <thead>
+                    <tr><th>Invoice</th><th>Member</th><th>Due</th><th class="text-right">Amount</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for invoice in overdue_invoice_rows %}
+                    <tr>
+                        <td class="mono">#{{ invoice.pk|stringformat:"05d" }}</td>
+                        <td>
+                            <a href="{% url 'members:detail' invoice.membership.member.pk %}" class="row-link">{{ invoice.membership.member }}</a>
+                            <div class="muted small">{{ invoice.membership.plan.name }}</div>
+                        </td>
+                        <td class="tabular">{{ invoice.due_date|date:"j M Y" }}</td>
+                        <td class="text-right tabular">€ {{ invoice.amount|floatformat:2 }}</td>
+                        <td>
+                            {% if invoice.status == 'overdue' %}<span class="badge badge-danger">Overdue</span>
+                            {% else %}<span class="badge badge-warning">Pending</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card__body">
+            <div style="text-align:center;padding:1.25rem 0;color:var(--color-muted)">
+                <svg width="36" height="36" fill="none" stroke="var(--color-success)" stroke-width="1.5" viewBox="0 0 24 24" style="margin:0 auto .6rem;display:block"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M8 12l3 3 5-6"/></svg>
+                <div style="color:var(--color-ink);font-weight:500">All clear</div>
+                <div class="small muted">No overdue or pending invoices.</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{# ─── Upcoming health events + upcoming lessons ──────────────────────── #}
+<section class="grid-2 mb-6" style="grid-template-columns: 1fr 1fr;">
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Upcoming events</div>
+                <div class="card__title">Vet, farrier &amp; vaccination · next 60 days</div>
+            </div>
+        </div>
+        {% if upcoming_health_events %}
+        <div class="table-wrap" style="border:none;border-radius:0">
+            <table class="data">
+                <thead><tr><th>Type</th><th>Horse</th><th>Due</th></tr></thead>
+                <tbody>
+                {% for ev in upcoming_health_events %}
+                <tr>
+                    <td>
+                        {% if ev.record_type == 'vet' %}<span class="badge badge-info">Vet</span>
+                        {% elif ev.record_type == 'farrier' %}<span class="badge badge-accent">Farrier</span>
+                        {% elif ev.record_type == 'vaccination' %}<span class="badge badge-success">Vaccination</span>
+                        {% else %}<span class="badge badge-neutral">{{ ev.get_record_type_display }}</span>{% endif %}
+                    </td>
+                    <td><a href="{% url 'horses:detail' ev.horse.pk %}" class="row-link">{{ ev.horse.name }}</a></td>
+                    <td class="tabular">{{ ev.next_due_date|date:"j M Y" }}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card__body"><p class="muted small" style="text-align:center;padding:2rem 0">No upcoming health events in the next 60 days.</p></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card__header">
+            <div>
+                <div class="stat__label mb-2">Schedule</div>
+                <div class="card__title">Next five lessons</div>
+            </div>
+            <a href="{% url 'lessons:list' %}" class="btn btn-outline btn-sm ml-auto">All lessons</a>
+        </div>
+        {% if upcoming_lessons %}
+        <div class="table-wrap" style="border:none;border-radius:0">
+            <table class="data">
+                <thead><tr><th>When</th><th>Lesson</th><th>Trainer</th></tr></thead>
+                <tbody>
+                    {% for lesson in upcoming_lessons %}
+                    <tr>
+                        <td>
+                            <div class="tabular" style="color:var(--color-ink);font-weight:500">{{ lesson.start_time|date:"D j M" }}</div>
+                            <div class="muted small mono">{{ lesson.start_time|date:"H:i" }}</div>
+                        </td>
+                        <td><a href="{% url 'lessons:detail' lesson.pk %}" class="row-link">{{ lesson.title }}</a></td>
+                        <td>{{ lesson.trainer|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card__body"><p class="muted small" style="text-align:center;padding:2rem 0">No upcoming lessons.</p></div>
+        {% endif %}
+    </div>
+</section>
+
+{# ─── Quick admin actions ─────────────────────────────────────────────── #}
+<section class="card">
+    <div class="card__body">
+        <div class="flex items-center gap-3" style="flex-wrap:wrap">
+            <div class="stat__label" style="margin-right:auto">Admin tools</div>
+            <a href="{% url 'accounts:user_list' %}" class="btn btn-outline btn-sm">Manage accounts</a>
+            <a href="{% url 'members:create' %}" class="btn btn-outline btn-sm">New rider</a>
+            <a href="{% url 'staff:create' %}" class="btn btn-outline btn-sm">New trainer</a>
+            <a href="{% url 'horses:create' %}" class="btn btn-outline btn-sm">New horse</a>
+            <a href="{% url 'billing:membership_create' %}" class="btn btn-outline btn-sm">New membership</a>
+        </div>
+    </div>
+</section>
