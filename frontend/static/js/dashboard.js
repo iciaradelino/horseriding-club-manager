@@ -5,10 +5,48 @@
    the DOM, so this single script supports all three role-specific dashboards
    without role-checks here. Data comes from data-* attributes the Django
    template renders from real backend context — no hardcoded fallbacks.
+
+   Bootstrapping is defensive: the script waits for DOMContentLoaded, then
+   retries briefly if Chart.js hasn't yet finished loading (rare but it
+   happens when the CDN is slow or a browser extension delays it). If
+   Chart.js is genuinely missing, we log one clear console message instead
+   of silently failing — which was the previous behaviour, making
+   "no chart" debugging almost impossible.
    ========================================================================= */
 (function () {
     'use strict';
-    if (typeof Chart === 'undefined') return;
+
+    function bootstrap() {
+        if (typeof Chart !== 'undefined') {
+            initCharts();
+            return;
+        }
+        // Chart.js may still be loading — retry up to ~2s
+        let attempts = 0;
+        const retry = setInterval(function () {
+            attempts += 1;
+            if (typeof Chart !== 'undefined') {
+                clearInterval(retry);
+                initCharts();
+            } else if (attempts > 20) {
+                clearInterval(retry);
+                console.warn(
+                    '[dashboard] Chart.js never became available. ' +
+                    'The CDN script at cdn.jsdelivr.net may be blocked or slow. ' +
+                    'Charts will not render on this page.'
+                );
+            }
+        }, 100);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', bootstrap);
+    } else {
+        bootstrap();
+    }
+
+    function initCharts() {
+    'use strict';
 
     Chart.defaults.font.family = "'Geist', 'Manrope', -apple-system, sans-serif";
     Chart.defaults.font.size = 12;
@@ -195,4 +233,6 @@
             },
         });
     }
+
+    } // end initCharts
 })();
