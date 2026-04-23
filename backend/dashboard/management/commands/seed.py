@@ -1,11 +1,26 @@
 """
 management command: python manage.py seed
 creates sample data so the full UI can be verified right after setup.
+includes 6 months of historical data so all dashboard charts are populated.
 """
-from datetime import date, timedelta
+import random
+from datetime import date, timedelta, datetime
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
+
+
+def _months_ago(n, day=1):
+    """return a date n months before today, clamped to a valid day."""
+    today = date.today()
+    month = today.month - n
+    year = today.year
+    while month <= 0:
+        month += 12
+        year -= 1
+    import calendar
+    day = min(day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
 
 
 class Command(BaseCommand):
@@ -162,8 +177,10 @@ class Command(BaseCommand):
         self.stdout.write(f"  {len(plans)} membership plans created")
 
         # ── memberships + invoices ───────────────────────────────────────────
+        # current active memberships (one per member)
         today = date.today()
-        for i, member in enumerate(members[:6]):
+        memberships = []
+        for i, member in enumerate(members):
             plan = plans[i % len(plans)]
             membership, created = Membership.objects.get_or_create(
                 member=member,
@@ -174,14 +191,49 @@ class Command(BaseCommand):
                     "status": Membership.Status.ACTIVE,
                 },
             )
+            memberships.append((member, membership, plan))
             if created:
+                # pending invoice for the current cycle
                 Invoice.objects.create(
                     membership=membership,
                     amount=plan.price,
-                    due_date=today,
+                    due_date=today + timedelta(days=7),
                     status=Invoice.Status.PENDING,
                 )
-        self.stdout.write("  memberships and invoices created")
+
+        # historical memberships + paid invoices spread over last 6 months
+        # → populates the admin revenue bar chart and new-memberships bar chart
+        invoice_count = 0
+        membership_count = 0
+        for months_back in range(1, 7):
+            start_d = _months_ago(months_back, day=1)
+            end_d = _months_ago(months_back - 1, day=28)
+            paid_d = start_d + timedelta(days=3)
+            # 2–4 new memberships each historical month
+            slots = members[(months_back * 2) % len(members):][:4]
+            for member in slots:
+                plan = plans[random.randint(0, len(plans) - 1)]
+                ms = Membership.objects.create(
+                    member=member,
+                    plan=plan,
+                    start_date=start_d,
+                    end_date=end_d,
+                    status=Membership.Status.EXPIRED,
+                )
+                membership_count += 1
+                Invoice.objects.create(
+                    membership=ms,
+                    amount=plan.price,
+                    due_date=start_d,
+                    status=Invoice.Status.PAID,
+                    paid_date=paid_d,
+                )
+                invoice_count += 1
+
+        self.stdout.write(
+            f"  memberships and invoices created "
+            f"(+{membership_count} historical, +{invoice_count} paid invoices)"
+        )
 
         # ── lessons ──────────────────────────────────────────────────────────
         lesson_titles = [
@@ -195,6 +247,8 @@ class Command(BaseCommand):
             "Group Hack",
         ]
         available_horses = [h for h in horses if h.status == Horse.Status.AVAILABLE]
+
+        # upcoming scheduled lessons (next 2 weeks) — unchanged from before
         for i in range(20):
             start = timezone.now() + timedelta(days=i % 14, hours=8 + (i % 4) * 2)
             end = start + timedelta(hours=1)
@@ -215,5 +269,51 @@ class Command(BaseCommand):
             if created and members:
                 lesson.members.set(members[: 2 + (i % 3)])
 
-        self.stdout.write("  20 lessons created")
+        # historical completed lessons spread across the last 6 months
+        # → populates member activity bar chart, horse workload doughnut,
+        #   horse usage doughnut, and trainer heatmap
+        completed_count = 0
+        # weekday + hour combos that make the heatmap look realistic
+        time_slots = [
+            (0, 9), (0, 11), (0, 14),   # mon
+            (1, 10), (1, 16),            # tue
+            (2, 9), (2, 11), (2, 15),   # wed
+            (3, 14), (3, 17),            # thu
+            (4, 9), (4, 11),             # fri
+            (5, 10), (5, 14), (5, 16),  # sat
+        ]
+        for months_back in range(1, 7):
+            # pick a monday in that month to anchor the week
+            anchor = _months_ago(months_back, day=7)
+            # walk back to monday of that week
+            anchor -= timedelta(days=anchor.weekday())
+            for week_offset in range(3):  # 3 weeks of lessons per month
+                week_anchor = anchor + timedelta(weeks=week_offset)
+                for slot_i, (weekday, hour) in enumerate(time_slots):
+                    lesson_date = week_anchor + timedelta(days=weekday)
+                    if lesson_date >= today:
+                        continue
+                    start_dt = datetime(
+                        lesson_date.year, lesson_date.month, lesson_date.day,
+                        hour, 0, tzinfo=timezone.get_current_timezone()
+                    )
+                    end_dt = start_dt + timedelta(hours=1)
+                    trainer = trainers[slot_i % len(trainers)]
+                    horse = available_horses[slot_i % len(available_horses)] if available_horses else None
+                    title = lesson_titles[slot_i % len(lesson_titles)]
+
+                    lesson = Lesson.objects.create(
+                        title=title,
+                        start_time=start_dt,
+                        end_time=end_dt,
+                        trainer=trainer,
+                        horse=horse,
+                        status=Lesson.Status.COMPLETED,
+                    )
+                    # assign 2–4 members, rotating so each member gets history
+                    offset = (months_back + week_offset + slot_i) % len(members)
+                    lesson.members.set(members[offset: offset + 3] or members[:3])
+                    completed_count += 1
+
+        self.stdout.write(f"  20 upcoming + {completed_count} historical completed lessons created")
         self.stdout.write(self.style.SUCCESS("database seeded successfully."))
