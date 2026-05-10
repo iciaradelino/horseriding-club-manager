@@ -21,7 +21,7 @@ A Django web application for managing the daily operations of a horse riding clu
 
 - **Backend:** Python / Django
 - **Frontend:** HTML, Django Templates, Tailwind CSS
-- **Database:** PostgreSQL ??
+- **Database:** SQLite
 
 ---
 
